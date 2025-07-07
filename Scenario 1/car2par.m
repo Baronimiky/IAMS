@@ -1,5 +1,23 @@
 function [a,e_n,i,OM, om, th] = car2par(rr,vv,mu)
 
+% Transformation from cartesian coordinates to Keplerian parameters
+%
+% [a, e, i, OM, om, th] = car2par(rr, vv, mu)
+%
+% -------------------------------------------------------------------------
+% Input arguments:
+% rr    [3x1]   position vector              [km]
+% vv    [3x1]   velocity vector              [km/s]
+% mu    [1x1]   gravitational parameter      [km^3/s^2]
+%
+% -------------------------------------------------------------------------
+% Output arguments:
+% a     [1x1]   semi-major axis              [km]
+% e     [1x1]   eccentricity                 [-]
+% i     [1x1]   inclination                  [rad]
+% OM    [1x1]   RAAN                         [rad]
+% om    [1x1]   pericenter anomaly           [rad]
+% th    [1x1]   true anomaly                 [rad]
 
 r_n = norm(rr);
 v_n = norm(vv);

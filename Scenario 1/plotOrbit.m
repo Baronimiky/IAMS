@@ -3,7 +3,7 @@ function plotOrbit(a,e,i,OM,om,th0,thf,dth,th,mu)
  x = th0:dth:thf;
  r_plot = [];
  for j = th0:dth:thf
-     [rr] = par2car(a,e,i,OM,om,j,mu); %matrice di tutti i punti della nostra orbita
+     [rr] = par2car(a,e,i,OM,om,j,mu); % matrice di tutti i punti della nostra orbita
      r_plot = [r_plot, rr];
  end
  hold on

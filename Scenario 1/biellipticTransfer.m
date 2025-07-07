@@ -1,7 +1,7 @@
 function [DeltaV1, DeltaV2, DeltaV3, Deltat1, Deltat2] = biellipticTransfer(ai, ei, af, ef, ra_t, mu)
 % Bitangent transfer for elliptic orbits
 %
-% [DeltaV1, DeltaV2, DeltaV3, Deltat1, Deltat2] = bitangentTransfer(ai, ei, af, ef, type, mu)
+% [DeltaV1, DeltaV2, DeltaV3, Deltat1, Deltat2] = bitangentTransfer(ai, ei, af, ef, ra_t, mu)
 %
 % -------------------------------------------------------------------------
 % Input arguments:
@@ -29,8 +29,8 @@ DeltaV1 = sqrt(mu)*sqrt((2/rp_t1)-(1/a_t1)) - sqrt(mu)*sqrt((2/rp_t1)-(1/ai));
 DeltaV2 = sqrt(mu)*sqrt((2/ra_t)-(1/a_t2)) - sqrt(mu)*sqrt((2/ra_t)-(1/a_t1));
 DeltaV3 = sqrt(mu)*sqrt((2/rp_t2)-(1/af)) - sqrt(mu)*sqrt((2/rp_t2)-(1/a_t2));
 
-Deltat1 = 2*pi *sqrt((a_t1^3)/mu);
-Deltat2 = 2*pi *sqrt((a_t2^3)/mu);
+Deltat1 = 2*pi * sqrt((a_t1^3)/mu);
+Deltat2 = 2*pi * sqrt((a_t2^3)/mu);
 
 
 end
