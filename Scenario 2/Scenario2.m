@@ -152,7 +152,12 @@ figure
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,5,mu_s);
 plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,3,mu_s);
 plotOrbit( a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,theta2_T_ott,0.0001,3,mu_s);
-legend('inizio','fine','trasferimento');
+[rr1,~] = par2car(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,mu_s);
+plot3(rr1(1),rr1(2),rr1(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+[rr2] = par2car(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta2_T_ott,mu_s);
+plot3(rr2(1),rr2(2),rr2(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+sole
+legend('inizio','fine','trasferimento','punto iniziale','punto finale','sole');
 
 
 %%
@@ -358,7 +363,7 @@ end
 %% plot curva di pareto
 
 % Identificazione delle soluzioni non dominate
-pareto_front = true(length(delta_v_results), 1); % Inizializza un array logico di true
+pareto_front = true(length(delta_v_results), 1);
 for i = 1:length(delta_v_results)
     for j = 1:length(delta_v_results)
         if (delta_v_results(j) <= delta_v_results(i) && dt_results(j) < dt_results(i)) || ...
