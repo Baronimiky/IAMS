@@ -1,4 +1,4 @@
-function [DeltaV, omf, theta]=changeOrbitalPlane(a,e,i_i,OMi,omi,i_f,OMf,thi,P,mu)
+function [DeltaV, omf, theta]=changeOrbitalPlane(a,e,i_i,OMi,omi,i_f,OMf,thi,mu)
 
 % Change of Plane maneuver
 %
@@ -18,7 +18,8 @@ function [DeltaV, omf, theta]=changeOrbitalPlane(a,e,i_i,OMi,omi,i_f,OMf,thi,P,m
 % -------------------------------------------------------------------------
 % Output arguments:
 % DeltaV  [1x1]    maneuver impulse                  [km/s]
-% omf     [1x1]    final pericenter anomaly
+% omf     [1x1]    final pericenter anomaly          [rad]
+% theta   [1x1]    true anomaly at manouver          [rad]
 
 
 if nargin<10

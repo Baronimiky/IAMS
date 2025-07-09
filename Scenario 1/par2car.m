@@ -36,9 +36,4 @@ T_eci_pf = R_om*R_i*R_OM;
 rr = T_eci_pf' * r_temp;
 vv = T_eci_pf' * v_temp;
 
-
-
-
-
 end
-

@@ -36,5 +36,4 @@ p = a * (1 - e^2);
 
 DeltaV = 2 * sqrt(mu / p) * e * sin((dw)/2);
 
-
 end
