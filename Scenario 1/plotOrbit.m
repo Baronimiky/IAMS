@@ -1,14 +1,13 @@
-function plotOrbit(a,e,i,OM,om,th0,thf,dth,th,mu)
+function plotOrbit(a,e,i,OM,om,th0,thf,dth,mu,color)
+    if nargin < 10  % Se il colore non è fornito
+        color = 'b';  % Default: blu
+    end
 
- x = th0:dth:thf;
- r_plot = [];
- for j = th0:dth:thf
-     [rr] = par2car(a,e,i,OM,om,j,mu); %matrice di tutti i punti della nostra orbita
-     r_plot = [r_plot, rr];
- end
- hold on
-% [rr_p] = par2car(a,e,i,OM,om,th,mu); % punto della nostra orbita
- plot3(r_plot(1,:),r_plot(2,:),r_plot(3,:));
- %plot3(rr_p(1),rr_p(2),rr_p(3),'k+','LineWidth',2);
+    theta = th0:dth:thf;
+    r_plot = zeros(3, length(theta));
+    for k = 1:length(theta)
+        r_plot(:,k) = par2car(a,e,i,OM,om,theta(k),mu);
+    end
+
+    plot3(r_plot(1,:), r_plot(2,:), r_plot(3,:), color, 'LineWidth', 1.5);
 end
-

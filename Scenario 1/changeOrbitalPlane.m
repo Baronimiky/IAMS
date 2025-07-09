@@ -1,77 +1,61 @@
-function [dv,omf,thf]=changeOrbitalPlane(ai,ei,Ii,OMi,omi,If,OMf,thi,P,mu)
+function [DeltaV, omf, theta]=changeOrbitalPlane(a,e,i_i,OMi,omi,i_f,OMf,thi,mu)
 
-% il tempo dt è il tempo necessario a raggiungere il punto di manovra a
-% partire dal punto iniziale thi
+% Change of Plane maneuver
+%
+% [DeltaV, omf, theta] = changeOrbitalPlane(a, e, i_i, OMi, omi, i_f, OMf, mu)
+%
+% -------------------------------------------------------------------------
+% Input arguments:
+% a       [1x1]    semi-major axis                   [km]
+% e       [1x1]    eccentricity                      [-]
+% i_i     [1x1]    initial inclination               [rad]
+% OMi     [1x1]    initial RAAN                      [rad]
+% omi     [1x1]    initial pericenter anomaly        [rad]
+% i_f     [1x1]    final inclination                 [rad]
+% OMf     [1x1]    final RAAN                        [rad]
+% mu      [1x1]    gravitational parameter           [km^3/s^2]
+%
+% -------------------------------------------------------------------------
+% Output arguments:
+% DeltaV  [1x1]    maneuver impulse                  [km/s]
+% omf     [1x1]    final pericenter anomaly          [rad]
+% theta   [1x1]    true anomaly at manouver          [rad]
 
-% SE OMf-OMi<=pi:
-%    se P=1: prende intersezione più vicina secondo senso di movimento a
-%    partire dal nodo ascendente dell'orbita iniziale (se OMf-OMi=pi prende
-%    intersezione più lontana dal nodo ascendente)
-%    se P=2: prende altro punto di intersezione
-% SE OMf-OMi>pi:
-%    fa l'opposto
 
-Ii=PositiveAngles(Ii);
-omi=PositiveAngles(omi);
-OMi=PositiveAngles(OMi);
-If=PositiveAngles(If);
-OMf=PositiveAngles(OMf);
-
-if nargin==9
+if nargin<10
     mu=398600.433;
 end
 
-alpha=acos(cos(Ii)*cos(If)+sin(Ii)*sin(If)*cos(OMf-OMi));
+alpha=acos(cos(i_i)*cos(i_f)+sin(i_i)*sin(i_f)*cos(OMf-OMi));
+ui=atan2(sin(OMf-OMi)/sin(alpha)*sin(i_f), (-cos(i_f)+cos(alpha)*cos(i_i))/sin(alpha)/sin(i_i));
+uf=atan2(sin(OMf-OMi)/sin(alpha)*sin(i_i), (cos(i_i)-cos(alpha)*cos(i_f))/sin(alpha)/sin(i_f));
 
 
-if((OMf-OMi)>=0 && (If-Ii)>=0)
-    ui=acos((cos(alpha)*cos(Ii)-cos(If))/(sin(alpha)*sin(Ii)));
-    uf=acos((cos(Ii)-cos(alpha)*cos(If))/(sin(alpha)*sin(If)));
-    if (OMf-OMi)>pi
-        ui=-ui;
-        uf=-uf;
-    end
+if((OMf-OMi)>0 && (i_f-i_i)>0)
+    thi = ui - omi;
+    omf = uf - thi;
+elseif((OMf-OMi)>0 && (i_f-i_i)<0)
+    thi = 2*pi - ui - omi;
+    omf = 2 * pi - uf - thi;
+elseif((OMf-OMi)<0 && (i_f-i_i)>0)
+    alpha=acos(cos(i_i)*cos(i_f)+sin(i_i)*sin(i_f)*cos(abs(OMf-OMi)));
+    ui=atan2(sin(abs(OMf-OMi))/sin(alpha)*sin(i_f), (-cos(i_f)+cos(alpha)*cos(i_i))/sin(alpha)/sin(i_i));
+    uf=atan2(sin(abs(OMf-OMi))/sin(alpha)*sin(i_i), (cos(i_i)-cos(alpha)*cos(i_f))/sin(alpha)/sin(i_f));
+    thi = 2*pi - ui - omi;
+    omf = 2 * pi - uf - thi;
+elseif((OMf-OMi)<0 && (i_f-i_i)<0)
+    alpha=acos(cos(i_i)*cos(i_f)+sin(i_i)*sin(i_f)*cos(abs(OMf-OMi)));
+    ui=atan2(sin(abs(OMf-OMi))/sin(alpha)*sin(i_f), (-cos(i_f)+cos(alpha)*cos(i_i))/sin(alpha)/sin(i_i));
+    uf=atan2(sin(abs(OMf-OMi))/sin(alpha)*sin(i_i), (cos(i_i)-cos(alpha)*cos(i_f))/sin(alpha)/sin(i_f));
+    thi = ui - omi;
+    omf = uf - thi;
 end
-if((OMf-OMi)>=0 && (If-Ii)<0) 
-    ui=-acos((cos(If)-cos(alpha)*cos(Ii))/(sin(alpha)*sin(Ii)));
-    uf=-acos((cos(alpha)*cos(If)-cos(Ii))/(sin(alpha)*sin(If)));
-    if (OMf-OMi)>pi
-        uf=-uf;
-        ui=-ui;
-    end
-end
-if((OMf-OMi)<0 && (If-Ii)>=0)
-    ui=-acos((cos(alpha)*cos(Ii)-cos(If))/(sin(alpha)*sin(Ii)));
-    uf=-acos((cos(Ii)-cos(alpha)*cos(If))/(sin(alpha)*sin(If)));
-    if (OMf-OMi)<-pi
-       ui=-ui;
-       uf=-uf;
-    end  
-end
-if((OMf-OMi)<0 && (If-Ii)<0) 
-    ui=acos((cos(If)-cos(alpha)*cos(Ii))/(sin(alpha)*sin(Ii)));
-    uf=acos((cos(alpha)*cos(If)-cos(Ii))/(sin(alpha)*sin(If)));
-    if (OMf-OMi)<-pi
-        uf=-uf;
-        ui=-ui;
-    end
-end    
+theta = thi;
 
-if(ui>=omi)
-    thf=ui-omi;
-else
-    thf=2*pi+(ui-omi);
+if cos(theta)>0
+    theta = theta + pi;
 end
 
-if(uf>=thf)
-    omf=uf-thf;
-else
-    omf=2*pi+(uf-thf);
+DeltaV=2*sqrt(mu/(a*(1-e^2)))*(1+e*cos(theta))*sin(alpha/2);
+
 end
-
-if (P==2)
-    thf=thf+pi;
-end
-
-dv=2*sqrt(mu/(ai*(1-ei^2)))*(1+ei*cos(thf))*sin(alpha/2);
-

@@ -34,7 +34,6 @@ thf = [theta1f; theta2f];
 
 p = a * (1 - e^2);
 
-DeltaV = 2 * sqrt(mu / p) * e * sin((omf-omi)/2);
-
+DeltaV = 2 * sqrt(mu / p) * e * sin((dw)/2);
 
 end
