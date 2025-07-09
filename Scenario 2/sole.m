@@ -1,17 +1,16 @@
 function sole(Rm)
 
-[X, Y, Z] = sphere(50);          % Reference Sphere
+[X, Y, Z] = sphere(50);          % sfera
 
 if nargin==0
-      Rm = 6.955 *1e+6;
+      Rm = 6.955 *1e+5;
 end  
 
-        % Place SUN
+        % Plotta il sole
         HSUN = surf(Rm*X,Rm*Y,Rm*Z);
-        % http://stereo.gsfc.nasa.gov/img/stereoimages/preview/euvisdoCarringtonMap.jpg
         % Load Sun Image
-        topoSUN = imread('euvisdoCarringtonMap.jpg');
-        % Set it on SUN
+        topoSUN = imread('sun.jpg');
+        % immagine sul sole
         set(HSUN,'facecolor','texture',...
                 'cdata',im2double(topoSUN),...
                 'edgecolor','none');

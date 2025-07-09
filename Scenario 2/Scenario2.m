@@ -26,7 +26,10 @@ delta_v_vect = [];
 e_T_n_vec = [];
 i = 0;
 
-%%
+Rt = 6378; % raggio Terra
+Rm = 6.955 *1e+5; % raggio Sole
+
+
 for th_i = 0:0.1:2*pi
     for th_f = 0:0.1:2*pi
 
@@ -66,7 +69,6 @@ for th_i = 0:0.1:2*pi
         
         % Creazione del ciclo for per ogni ω_T,n
         for omega_T_n = 0:0.1:2*pi % Definire omega_values con i valori desiderati
-            
             % Definizione delle matrici di rotazione
             R_omega_T_n = [cos(omega_T_n), sin(omega_T_n), 0;
                           -sin(omega_T_n), cos(omega_T_n), 0;
@@ -117,7 +119,7 @@ for th_i = 0:0.1:2*pi
                     delta_v_ott = delta_v_n;
                     th_i_ott = th_i;
                     th_f_ott = th_f;
-                    omega_T_ott = omega_T_n;
+                    omega_T_ott = omega_T_n
                     e_T_ott = e_T_n;
                     a_T_ott = a_T_n;
                     theta1_T_ott = theta1_T_n;
@@ -141,14 +143,22 @@ end
             disp('----------------------------------');
   j = 1:1:i;
    plot(j,delta_v_vect);
-
-    
-    % [v1T_n] = orbVelocity(a_T_n, e_T_n, i_T, Omega_T, omega_T_n, theta1_T_n, mu_s);
-    % [v2T_n] = orbVelocity(a_T_n, e_T_n, i_T, Omega_T, omega_T_n, theta2_T_n, mu_s);
     
     
 %%
 figure
+plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,5,mu_s);
+plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,3,mu_s);
+sole(Rm*20);
+legend('orbita Terra','orbita Asteroide','Sole');
+xlabel('Asse X [Km]')
+ylabel('Asse Y [Km]')
+zlabel('Asse Z [Km]')
+box on
+grid on
+view(-20, 15)
+exportgraphics(gcf, 'orbita_i.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
+%%
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,5,mu_s);
 plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,3,mu_s);
 plotOrbit( a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,theta2_T_ott,0.0001,3,mu_s);
@@ -156,9 +166,10 @@ plotOrbit( a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,theta2_T
 plot3(rr1(1),rr1(2),rr1(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
 [rr2] = par2car(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta2_T_ott,mu_s);
 plot3(rr2(1),rr2(2),rr2(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
-sole
-legend('inizio','fine','trasferimento','punto iniziale','punto finale','sole');
-
+sole(Rm*20);
+Terra3d(Rt*700, rr1);
+asteroid(Rt*500,rr2);
+legend('orbita terra','orbita asteroide','trasferimento','punto iniziale (Terra)','punto finale (Asteroide)','sole');
 
 %%
 clc
@@ -196,6 +207,23 @@ clc
     
     x_ga = ga(fun_ott_vel,3,A,B,Aeq,Beq,Lb,Ub, nonlcon,options);
     delta_v_ott_fun_ga = fun_ott_vel(x_ga);
+
+    [a_T_ga_vec,e_T_ga_vec,i_T_ga_vec,Omega_T_ga_vec,omega_T_ga_vec,theta1_T_ga_vec,theta2_T_ga_vec] = calcolo_orb(a_i,e_i,i_i,OM_i,om_i,a_f,e_f,i_f,OM_f,om_f,mu_s,x_ga);
+%% plot velocità ottimale
+
+figure
+plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,5,mu_s);
+plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,3,mu_s);
+plotOrbit(a_T_ga_vec,e_T_ga_vec,i_T_ga_vec,Omega_T_ga_vec,omega_T_ga_vec,theta1_T_ga_vec,theta2_T_ga_vec,0.0001,3,mu_s);
+[rr1,~] = par2car(a_T_ga_vec,e_T_ga_vec,i_T_ga_vec,Omega_T_ga_vec,omega_T_ga_vec,theta1_T_ga_vec,mu_s);
+plot3(rr1(1),rr1(2),rr1(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+[rr2,~] = par2car(a_T_ga_vec,e_T_ga_vec,i_T_ga_vec,Omega_T_ga_vec,omega_T_ga_vec,theta2_T_ga_vec,mu_s);
+plot3(rr2(1),rr2(2),rr2(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+sole(Rm*20);
+Terra3d(Rt*700, rr1);
+asteroid(Rt*500,rr2);
+legend('orbita terra','orbita asteroide','trasferimento','punto iniziale (Terra)','punto finale (Asteroide)','sole');
+
 %%
 
 
@@ -258,13 +286,6 @@ delta_t_ott_fun = fun_ott_tem(x_ott_tem);
 
 [a_T_ott_tem,e_T_ott_tem,i_T_ott_tem,Omega_T_ott_tem,omega_T_ott_tem,theta1_T_ott_tem,theta2_T_ott_tem] = calcolo_orb(a_i,e_i,i_i,OM_i,om_i,a_f,e_f,i_f,OM_f,om_f,mu_s,x_ott_tem);
 
-    %% plot ottimizzando il tempo
-
-figure
-plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,5,mu_s);
-plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,3,mu_s);
-plotOrbit(a_T_ga_tem,e_T_ga_tem,i_T_ga_tem,Omega_T_ga_tem,omega_T_ga_tem,theta1_T_ga_tem,theta2_T_ga_tem,0.0001,3,mu_s);
-legend('inizio','fine','trasferimento');
 %% 
 clc
 
@@ -287,16 +308,22 @@ figure
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,5,mu_s);
 plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,3,mu_s);
 plotOrbit(a_T_ga_tem,e_T_ga_tem,i_T_ga_tem,Omega_T_ga_tem,omega_T_ga_tem,theta1_T_ga_tem,theta2_T_ga_tem,0.0001,3,mu_s);
-legend('inizio','fine','trasferimento');
-
+[rr1,~] = par2car(a_T_ga_tem,e_T_ga_tem,i_T_ga_tem,Omega_T_ga_tem,omega_T_ga_tem,theta1_T_ga_tem,mu_s);
+plot3(rr1(1),rr1(2),rr1(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+[rr2] = par2car(a_T_ga_tem,e_T_ga_tem,i_T_ga_tem,Omega_T_ga_tem,omega_T_ga_tem,theta2_T_ga_tem,mu_s);
+plot3(rr2(1),rr2(2),rr2(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+sole(Rm*20);
+Terra3d(Rt*700, rr1);
+asteroid(Rt*500,rr2);
+legend('orbita terra','orbita asteroide','trasferimento','punto iniziale (Terra)','punto finale (Asteroide)','sole');
 %% ottimizzazione sia del tempo sia della velocità
 
 clc
 % x = [th_i;th_f;omega_T_n];
 delta_v_ott_O = 6.17;
 dt_ott_O = 5*1e5;
-alpha = 1;
-beta = 1;
+alpha = 0.5;
+beta = 0.5;
 
 fun_ott_vec_tem = @(x) fun_vec_tem(a_i,e_i,i_i,OM_i,om_i,x(1),a_f,e_f,i_f,OM_f,om_f,x(2),mu_s,x(3),delta_v_ott_O,dt_ott_O,alpha,beta);
 x0 = [rand*2*pi;rand*2*pi;rand*2*pi];
@@ -307,13 +334,22 @@ Beq = [];
 Lb = [0;0;0];
 Ub = [2*pi;2*pi;2*pi];
 
-options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'interior-point', ...
-    'MaxFunctionEvaluations', 100000, 'MaxIterations', 100000, ...
-    'PlotFcn', {@optimplotfval, @optimplotfirstorderopt, @optimplotconstrviolation});
+%options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'interior-point', ...
+%    'MaxFunctionEvaluations', 100000, 'MaxIterations', 100000, ...
+%    'PlotFcn', {@optimplotfval, @optimplotfirstorderopt, @optimplotconstrviolation});
+
+options = optimoptions('ga', ...
+    'UseParallel', true, ...
+    'MaxGenerations', 2000, ...
+    'PopulationSize', 2000, ...
+    'FunctionTolerance', 1e-6, ...
+    'PlotFcn', {@gaplotbestf}, ...
+    'Display', 'iter');
 
 nonlcon = @(x) vinc_nlin(x,a_i,e_i,i_i,OM_i,om_i,a_f,e_f,i_f,OM_f,om_f,mu_s);
 
-x_ott_vec_tem = fmincon(fun_ott_vec_tem,x0,A,B,Aeq,Beq,Lb,Ub,nonlcon,options);
+%x_ott_vec_tem = fmincon(fun_ott_vec_tem,x0,A,B,Aeq,Beq,Lb,Ub,nonlcon,options);
+x_ott_vec_tem = ga(fun_ott_vec_tem,3,A,B,Aeq,Beq,Lb,Ub,nonlcon,options);
 
 O_ott = fun_ott_vec_tem(x_ott_vec_tem);
 
@@ -329,7 +365,14 @@ figure
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,5,mu_s);
 plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,3,mu_s);
 plotOrbit(a_T_ott_vec_tem,e_T_ott_vec_tem,i_T_ott_vec_tem,Omega_T_ott_vec_tem,omega_T_ott_vec_tem,theta1_T_ott_vec_tem,theta2_T_ott_vec_tem,0.0001,3,mu_s);
-legend('inizio','fine','trasferimento');
+[rr1,~] = par2car(a_T_ott_vec_tem,e_T_ott_vec_tem,i_T_ott_vec_tem,Omega_T_ott_vec_tem,omega_T_ott_vec_tem,theta1_T_ott_vec_tem,mu_s);
+plot3(rr1(1),rr1(2),rr1(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+[rr2] = par2car(a_T_ott_vec_tem,e_T_ott_vec_tem,i_T_ott_vec_tem,Omega_T_ott_vec_tem,omega_T_ott_vec_tem,theta2_T_ott_vec_tem,mu_s);
+plot3(rr2(1),rr2(2),rr2(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+sole(Rm*20);
+Terra3d(Rt*700, rr1);
+asteroid(Rt*500,rr2);
+legend('orbita terra','orbita asteroide','trasferimento','punto iniziale (Terra)','punto finale (Asteroide)','sole');
 
 %% scelta parametri alpha e beta
 
@@ -394,6 +437,7 @@ norm_vals = sqrt((delta_v_results/delta_v_ott_O).^2 + (dt_results/dt_ott_O).^2);
 [~, best_idx] = min(norm_vals);
 hold on;
 plot(delta_v_results(best_idx), dt_results(best_idx), 'ro', 'MarkerSize', 10, 'LineWidth', 2);
+scatter(delta_v_results, dt_results, 'filled');
 legend('Soluzioni', 'Compromesso scelto');
 
 % --- CALCOLO α E β OTTIMI ---
@@ -414,3 +458,6 @@ beta = beta / alpha_beta_sum;
 
 fprintf('Alpha ottimo: %.4f\n', alpha);
 fprintf('Beta ottimo:  %.4f\n', beta);
+
+alpha = 0.4668;
+beta = 0.5332;
