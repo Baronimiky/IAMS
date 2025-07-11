@@ -119,7 +119,7 @@ for th_i = 0:0.1:2*pi
                     delta_v_ott = delta_v_n;
                     th_i_ott = th_i;
                     th_f_ott = th_f;
-                    omega_T_ott = omega_T_n
+                    omega_T_ott = omega_T_n;
                     e_T_ott = e_T_n;
                     a_T_ott = a_T_n;
                     theta1_T_ott = theta1_T_n;
@@ -143,9 +143,15 @@ end
             disp('----------------------------------');
   j = 1:1:i;
    plot(j,delta_v_vect);
+   legend('\DeltaV');
+   xlabel('Iterazioni')
+   ylabel('\DeltaV [Km/s]')
+   xlim([1,i])
+grid on
+%exportgraphics(gcf, 'delta_v_for.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
     
     
-%%
+%% Plot orbite
 figure
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,5,mu_s);
 plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,3,mu_s);
@@ -157,8 +163,9 @@ zlabel('Asse Z [Km]')
 box on
 grid on
 view(-20, 15)
-exportgraphics(gcf, 'orbita_i.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
-%%
+%exportgraphics(gcf, 'delta_v_for.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
+
+%% Plot Orbite con trasferimento Grid Search
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,5,mu_s);
 plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,3,mu_s);
 plotOrbit( a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,theta2_T_ott,0.0001,3,mu_s);
@@ -171,12 +178,12 @@ Terra3d(Rt*700, rr1);
 asteroid(Rt*500,rr2);
 legend('orbita terra','orbita asteroide','trasferimento','punto iniziale (Terra)','punto finale (Asteroide)','sole');
 
-%%
+%% Ottimizzazione Velocità con Fmincon
 clc
 % x = [th_i;th_f;omega_T_n];
 
 fun_ott_vel = @(x) fun_vel(a_i,e_i,i_i,OM_i,om_i,x(1),a_f,e_f,i_f,OM_f,om_f,x(2),mu_s,x(3));
-x0 = [rand*2*pi;rand*2*pi;rand*2*pi];
+x0 = [pi;pi;pi];
 A = [];
 B = [];
 Aeq = [];
@@ -191,27 +198,27 @@ options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'interior-poin
 nonlcon = @(x) vinc_nlin(x,a_i,e_i,i_i,OM_i,om_i,a_f,e_f,i_f,OM_f,om_f,mu_s);
 
 x_ott = fmincon(fun_ott_vel, x0, A, B, Aeq, Beq, Lb, Ub, nonlcon, options);
-
+%exportgraphics(gcf, 'fmincon.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
 delta_v_ott_fun = fun_ott_vel(x_ott);
 
-%% 
+%% Ottimizzazione Velocità con Ga
 clc
 
     options = optimoptions('ga', ...
     'UseParallel', false, ...
     'MaxGenerations', 2000, ...
     'PopulationSize', 2000, ...
-    'FunctionTolerance', 1e-6, ...
+    'FunctionTolerance', 1e-10, ...
     'PlotFcn', {@gaplotbestf}, ...
     'Display', 'iter');
     
     x_ga = ga(fun_ott_vel,3,A,B,Aeq,Beq,Lb,Ub, nonlcon,options);
     delta_v_ott_fun_ga = fun_ott_vel(x_ga);
-
+    %exportgraphics(gcf, 'ga.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
     [a_T_ga_vec,e_T_ga_vec,i_T_ga_vec,Omega_T_ga_vec,omega_T_ga_vec,theta1_T_ga_vec,theta2_T_ga_vec] = calcolo_orb(a_i,e_i,i_i,OM_i,om_i,a_f,e_f,i_f,OM_f,om_f,mu_s,x_ga);
-%% plot velocità ottimale
+%% Plot velocità ottimale di Ga
 
-figure
+figure('Position', [100, 100, 1000, 600])  
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,5,mu_s);
 plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,3,mu_s);
 plotOrbit(a_T_ga_vec,e_T_ga_vec,i_T_ga_vec,Omega_T_ga_vec,omega_T_ga_vec,theta1_T_ga_vec,theta2_T_ga_vec,0.0001,3,mu_s);
@@ -222,10 +229,15 @@ plot3(rr2(1),rr2(2),rr2(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
 sole(Rm*20);
 Terra3d(Rt*700, rr1);
 asteroid(Rt*500,rr2);
+grid on
+xlabel('Asse X [Km]')
+ylabel('Asse Y [Km]')
+zlabel('Asse Z [Km]')
+view(-10,25)
+legend('dati', 'Location', 'northeast')
 legend('orbita terra','orbita asteroide','trasferimento','punto iniziale (Terra)','punto finale (Asteroide)','sole');
-
-%%
-
+%exportgraphics(gcf, 'orbita_ga.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
+%% Ottimizzazione Velocità con Surrogateopt
 
 opts = optimoptions('surrogateopt', ...
     'UseParallel', false, ...         % usa CPU multiple se puoi
@@ -234,11 +246,7 @@ opts = optimoptions('surrogateopt', ...
 
 [x_surr, fval_surr] = surrogateopt(fun_ott_vel, Lb, Ub, opts);
 
-%% 
-
-
-
-clc
+%% Ottimizzazione Velocità con Particleswarm
 
 opts = optimoptions('particleswarm', ...
     'SwarmSize', 100, ...
@@ -248,7 +256,7 @@ opts = optimoptions('particleswarm', ...
 
 [x_par, fval_par] = particleswarm(fun_ott_vel, 3, Lb,Ub, opts);
 
-%%
+%% Ottimizzazione Velocità con Fmincon annidati
 clc
 
 options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'interior-point', ...
@@ -260,9 +268,8 @@ problem = createOptimProblem('fmincon', 'objective', fun_ott_vel, 'x0', x0, 'lb'
 ms = MultiStart('UseParallel', true);
 [x, fval_multi] = run(ms, problem, 50);
 
-%% ottimizzazione del tempo di manovra
+%% Ottimizzazione del tempo di manovra con Fmincon
 
-clc
 % x = [th_i;th_f;omega_T_n];
 
 fun_ott_tem = @(x) fun_tem(a_i,e_i,i_i,OM_i,om_i,x(1),a_f,e_f,i_f,OM_f,om_f,x(2),mu_s,x(3));
@@ -286,8 +293,7 @@ delta_t_ott_fun = fun_ott_tem(x_ott_tem);
 
 [a_T_ott_tem,e_T_ott_tem,i_T_ott_tem,Omega_T_ott_tem,omega_T_ott_tem,theta1_T_ott_tem,theta2_T_ott_tem] = calcolo_orb(a_i,e_i,i_i,OM_i,om_i,a_f,e_f,i_f,OM_f,om_f,mu_s,x_ott_tem);
 
-%% 
-clc
+%% Ottimizzazione del tempo di manovra con Ga
 
     options = optimoptions('ga', ...
     'UseParallel', true, ...
@@ -302,9 +308,9 @@ clc
 
     [a_T_ga_tem,e_T_ga_tem,i_T_ga_tem,Omega_T_ga_tem,omega_T_ga_tem,theta1_T_ga_tem,theta2_T_ga_tem] = calcolo_orb(a_i,e_i,i_i,OM_i,om_i,a_f,e_f,i_f,OM_f,om_f,mu_s,x_ga_tem);
     
-    %% plot ottimizzando il tempo
+%% Plot ottimizzando il tempo con Ga
 
-figure
+figure('Position', [100, 100, 1000, 600])
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,5,mu_s);
 plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,3,mu_s);
 plotOrbit(a_T_ga_tem,e_T_ga_tem,i_T_ga_tem,Omega_T_ga_tem,omega_T_ga_tem,theta1_T_ga_tem,theta2_T_ga_tem,0.0001,3,mu_s);
@@ -315,15 +321,22 @@ plot3(rr2(1),rr2(2),rr2(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
 sole(Rm*20);
 Terra3d(Rt*700, rr1);
 asteroid(Rt*500,rr2);
+grid on
+xlabel('Asse X [Km]')
+ylabel('Asse Y [Km]')
+zlabel('Asse Z [Km]')
+view(-10,25)
+legend('dati', 'Location', 'northeast')
 legend('orbita terra','orbita asteroide','trasferimento','punto iniziale (Terra)','punto finale (Asteroide)','sole');
-%% ottimizzazione sia del tempo sia della velocità
+exportgraphics(gcf, 'orbita_gatem.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
+%% ottimizzazione sia del tempo sia della velocità con Ga/Fmincon
 
 clc
 % x = [th_i;th_f;omega_T_n];
 delta_v_ott_O = 6.17;
 dt_ott_O = 5*1e5;
-alpha = 0.5;
-beta = 0.5;
+alpha = 0.4921;
+beta = 0.5079;
 
 fun_ott_vec_tem = @(x) fun_vec_tem(a_i,e_i,i_i,OM_i,om_i,x(1),a_f,e_f,i_f,OM_f,om_f,x(2),mu_s,x(3),delta_v_ott_O,dt_ott_O,alpha,beta);
 x0 = [rand*2*pi;rand*2*pi;rand*2*pi];
@@ -361,7 +374,7 @@ dt_ott_vec_tem = fun_tem(a_i,e_i,i_i,OM_i,om_i,x_ott_vec_tem(1),a_f,e_f,i_f,OM_f
 
  %% plot ottimizzando il tempo e la velocità
 
-figure
+figure('Position', [100, 100, 1000, 600])
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,5,mu_s);
 plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,3,mu_s);
 plotOrbit(a_T_ott_vec_tem,e_T_ott_vec_tem,i_T_ott_vec_tem,Omega_T_ott_vec_tem,omega_T_ott_vec_tem,theta1_T_ott_vec_tem,theta2_T_ott_vec_tem,0.0001,3,mu_s);
@@ -372,7 +385,14 @@ plot3(rr2(1),rr2(2),rr2(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
 sole(Rm*20);
 Terra3d(Rt*700, rr1);
 asteroid(Rt*500,rr2);
+grid on
+xlabel('Asse X [Km]')
+ylabel('Asse Y [Km]')
+zlabel('Asse Z [Km]')
+view(-10,25)
+legend('dati', 'Location', 'northeast')
 legend('orbita terra','orbita asteroide','trasferimento','punto iniziale (Terra)','punto finale (Asteroide)','sole');
+%exportgraphics(gcf, 'orbita_gavectem.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
 
 %% scelta parametri alpha e beta
 
@@ -383,6 +403,10 @@ beta_values = linspace(0.1, 10, 10);   % Variazione dei valori di beta
 % Variabili per memorizzare i risultati
 delta_v_results = [];  % Risultati delta-v
 dt_results = [];       % Risultati dt
+
+options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'interior-point', ...
+   'MaxFunctionEvaluations', 100000, 'MaxIterations', 100000, ...
+    'PlotFcn', {@optimplotfval, @optimplotfirstorderopt, @optimplotconstrviolation});
 
 % Inizializzazione del ciclo per trovare la curva di Pareto
 for alpha = alpha_values
@@ -424,7 +448,6 @@ xlabel('Delta-v (m/s)');
 ylabel('Tempo di volo (s)');
 title('Curva di Pareto - Ottimizzazione Delta-v e Tempo di Volo');
 grid on;
-
 % Traccia la curva di Pareto
 hold on;
 plot(delta_v_results(pareto_front), dt_results(pareto_front), 'r-', 'LineWidth', 2); % Traccia la frontiera di Pareto
@@ -437,9 +460,12 @@ norm_vals = sqrt((delta_v_results/delta_v_ott_O).^2 + (dt_results/dt_ott_O).^2);
 [~, best_idx] = min(norm_vals);
 hold on;
 plot(delta_v_results(best_idx), dt_results(best_idx), 'ro', 'MarkerSize', 10, 'LineWidth', 2);
+xlabel('Delta-v (m/s)');
+ylabel('Tempo di volo (s)');
+title('Curva di Pareto - Ottimizzazione Delta-v e Tempo di Volo');
 scatter(delta_v_results, dt_results, 'filled');
 legend('Soluzioni', 'Compromesso scelto');
-
+exportgraphics(gcf, 'pareto.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
 % --- CALCOLO α E β OTTIMI ---
 delta_v_star = delta_v_results(best_idx);
 dt_star = dt_results(best_idx);
@@ -459,5 +485,5 @@ beta = beta / alpha_beta_sum;
 fprintf('Alpha ottimo: %.4f\n', alpha);
 fprintf('Beta ottimo:  %.4f\n', beta);
 
-alpha = 0.4668;
-beta = 0.5332;
+alpha =  0.4921;
+beta = 0.5079;
