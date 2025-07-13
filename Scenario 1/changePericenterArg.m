@@ -18,16 +18,10 @@ function [DeltaV, omf, thi, thf, DeltaT] = changePericenterArg (a, e, omi, omf, 
 % omf       [1x1]       final pericenter anomaly        [km/s]
 % thi       [1x1]       initial true anomaly            [rad]
 % thf       [1x1]       final true anomaly              [rad]
-%
+% P - Maneuver point selection:
+%       1: Perform maneuver at farthest point from current position
+%       2: Perform maneuver at closest point to current position
 
-
-%  con P=1: 
-%    se a è il punto di manovra più vicino (vicino al perigeo) e b è il punto di manovra più
-%    lontano (vicino all'apogeo), allora se thi è dopo a e prima di b la
-%    manovra avviene in b, altrimenti avviene in a
-% con P=2: 
-%    prende l'altro punto (quello più lontano rispetto al senso di
-%    movimento del corpo lungo l'orbita)
 
 
 omf=PositiveAngles(omf);

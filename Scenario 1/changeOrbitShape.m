@@ -13,7 +13,9 @@ function [dv1,dv2,dv3,thf,dt,om_f_new]=changeOrbitShape(ai,ei,omi,af,ef,omf,P,ra
 
     % Calcola la differenza in omega
     delta_omega = round(abs(omi - omf), 12);
-    isOpposite = (delta_omega == round(pi, 12));
+    
+    angular_tol = 1e-10;
+    isOpposite = abs(mod(delta_omega, 2*pi) - pi) < angular_tol;
     isSame = (delta_omega == 0 || delta_omega == round(2*pi, 12));
 
     % ---------------------------
@@ -47,7 +49,7 @@ function [dv1,dv2,dv3,thf,dt,om_f_new]=changeOrbitShape(ai,ei,omi,af,ef,omf,P,ra
     else
         % Calcola con funzione biellipticTransfer
         [dv1, dv2, dv3, dt1, dt2, om_f_new] = biellipticTransfer(ai, ei, af, ef, ra_t, omi, mu);
-        dt = dt1 / 2 + dt2 / 2;
+        dt = dt1 + dt2;
 
         % Imposta angolo finale thf
         if (isSame && P == 1) || (isOpposite && P == 2)

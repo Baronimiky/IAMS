@@ -137,6 +137,75 @@ dv_MIN
 
 
 
+% tra quelle presenti ora seleziono quella con il deltat minore
+
+
+
+%% plot
+
+% Trova l'indice della strategia con delta-v minimo
+[~, idx_min] = min(dv_vec);
+
+% Estrai i parametri rilevanti
+param = param_vec(idx_min, :);
+
+ra_t      = param(1);  % raggio apocentro per biellittico (solo se applicabile)
+dv1       = param(4);  % primo impulso
+dv2       = param(5);  % secondo impulso
+dv3       = param(6);  % terzo impulso (solo biellittico)
+om_plane  = param(13); % argomento pericentro dopo prima manovra
+om_peri   = param(14); % argomento pericentro dopo seconda manovra
+th_plane  = param(15); % anomalia vera manovra nel piano
+th_shape  = param(17); % anomalia vera manovra di forma (cambio forma orbitale)
+
+% Controlla se è un trasferimento biellittico o bitangente
+isBiellittico = (dv3 > 0);  % se c'è il terzo impulso, è biellittico
+
+% === Plot orbita iniziale ===
+plotOrbit(a_i, e_i, i_i, OM_i, om_i, 0, 2*pi, dth, mu_t, 'g');  % verde
+hold on
+
+% === Plot orbita finale ===
+plotOrbit(a_f, e_f, i_f, OM_f, om_f, 0, 2*pi, dth, mu_t, 'r');  % rossa
+
+% === Punto partenza ===
+[rr_start] = par2car(a_i,e_i,i_i,OM_i,om_i,th_plane,mu_t);
+plot3(rr_start(1), rr_start(2), rr_start(3), 'k+','LineWidth',2);
+
+% === Orbite di trasferimento ===
+if isBiellittico
+    % Primo arco di trasferimento: da orbita iniziale a ra_t
+    rp1 = a_i * (1 - e_i);
+    a_t1 = (rp1 + ra_t)/2;
+    e_t1 = (ra_t - rp1)/(ra_t + rp1);
+    plotOrbit(a_t1, e_t1, i_f, OM_f, om_plane, 0, pi, dth, mu_t, 'm');  % viola
+
+    % Secondo arco: da ra_t a orbita finale
+    rp2 = a_f * (1 - e_f);
+    a_t2 = (rp2 + ra_t)/2;
+    e_t2 = (ra_t - rp2)/(ra_t + rp2);
+    plotOrbit(a_t2, e_t2, i_f, OM_f, om_peri, pi, 2*pi, dth, mu_t, 'c');  % ciano
+
+else
+    % Bitangente: una sola orbita di trasferimento
+    % Calcola rpT e raT dal tipo (usa P se serve)
+    rpT = a_i * (1 - e_i);
+    raT = a_f * (1 + e_f);
+    a_T = (rpT + raT)/2;
+    e_T = (raT - rpT)/(raT + rpT);
+
+    plotOrbit(a_T, e_T, i_f, OM_f, om_plane, 0, 2*pi, dth, mu_t, 'b');  % blu
+end
+
+% Legenda
+legend('Orbita Iniziale','Orbita Finale','Punto manovra','Trasferimento 1','Trasferimento 2');
+axis equal
+grid on
+title(sprintf('Strategia a Delta-v minimo (%.3f km/s)', dv_MIN))
+
+
+
+
 
 
 
