@@ -1,4 +1,4 @@
-function [DeltaV1, DeltaV2, Deltat] = bitangentTransfer(ai, ei, af, ef, type, mu)
+function [DeltaV1, DeltaV2, Deltat, om_f] = bitangentTransfer(ai, ei, af, ef, om_i, type, mu)
 
 % Bitangent transfer for elliptic orbits
 %
@@ -20,6 +20,8 @@ function [DeltaV1, DeltaV2, Deltat] = bitangentTransfer(ai, ei, af, ef, type, mu
 % Deltat    [1x1]  maneuver time                   [s]
 %
 
+    Deltat = 0;
+
     % calcolo i raggi di pericentro e apocentro iniziali e finali
     rp_i = ai * (1 - ei);
     ra_i = ai * (1 + ei);
@@ -35,7 +37,7 @@ function [DeltaV1, DeltaV2, Deltat] = bitangentTransfer(ai, ei, af, ef, type, mu
             raT = ra_i;
         case 'pp'  % Pericentro a Pericentro
             rpT = rp_i;
-            raT = ra_i;
+            raT = rp_f;
         case 'aa'  % Apocentro a Apocentro
             rpT = ra_i;
             raT = ra_f;
@@ -58,17 +60,26 @@ function [DeltaV1, DeltaV2, Deltat] = bitangentTransfer(ai, ei, af, ef, type, mu
     if type == "pa"
         DeltaV1 = vpT - vp_i;
         DeltaV2 = va_f - vaT;
+        om_f = om_i;
     elseif type == "ap"
         DeltaV1 = vaT - va_i;
         DeltaV2 = vp_f - vpT;
+        om_f = om_i;
     elseif type == "pp"
         DeltaV1 = vpT - vp_i;
-        DeltaV2 = vp_f - vpT;
+        DeltaV2 = vp_f - vaT;
+        om_f = PositiveAngles(om_i + pi);
     elseif type == "aa"
-        DeltaV1 = vaT - va_i;
+        DeltaV1 = vpT - va_i;
         DeltaV2 = va_f - vaT;
+
+        if om_i + pi > 2*pi
+            Deltat = 2 * pi * sqrt(aT^3 / mu);
+        end
+        
+        om_f = PositiveAngles(om_i + pi);
     end
     
     % Compute transfer time (half period of transfer orbit)
-    Deltat = pi * sqrt(aT^3 / mu);
+    Deltat = Deltat + pi * sqrt(aT^3 / mu);
 end

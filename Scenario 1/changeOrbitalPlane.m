@@ -2,7 +2,7 @@ function [DeltaV, omf, theta]=changeOrbitalPlane(a,e,i_i,OMi,omi,i_f,OMf,thi,mu)
 
 % Change of Plane maneuver
 %
-% [DeltaV, omf, theta] = changeOrbitalPlane(a, e, i_i, OMi, omi, i_f, OMf, mu)
+% [DeltaV, omf, theta] = changeOrbitalPlane(a, e, i_i, OMi, omi, i_f, OMf, thi, mu)
 %
 % -------------------------------------------------------------------------
 % Input arguments:
