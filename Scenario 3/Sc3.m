@@ -6,6 +6,7 @@ clc
 
 % Costanti
 G = 6.672591e-11;              % [Nm^2/kg^2] costante gravitazionale
+epsilon = deg2rad(23.45);  % Obliquità eclittica
 
 % Terra
 R_T = 6378;                    % [km] raggio medio Terra
@@ -23,7 +24,7 @@ vvf = [-8.1090; -4.3270; -0.0599];             % [km/s]
 % Velocità eccesso iperbolico (da SC2) nel caso di ottimizzazione deltav
 v1T_n = [10.6091; 37.5509; 0.4811];                  % [km/s] trasferimento eliocentrico
 vv1i=[-13.4511; 26.7331; -0.0019];
-v_inf1_vec = (v1T_n-vv1i);                           % v_infinity geocentrica
+v_inf1_vec1 = (v1T_n-vv1i);                           % v_infinity geocentrica
 
 % Sphere of Influence della Terra
 r_soi_T = norm(rrf) * (M_T / M_S)^(2/5);             % [km]
@@ -35,8 +36,8 @@ r_soi_T = norm(rrf) * (M_T / M_S)^(2/5);             % [km]
 % % Velocità eccesso iperbolico (v_inf)
 % v_inf1_vec = [3; 0; 0];           % v_inf = 3 km/s, direzione tangenziale
 
+[DeltaV1, v_inf1, v_H1, v_circ, a_H, e_H, Delta_H1] = HypFuga(rrf, vvf, v_inf1_vec1, mu_T, true);
 
-[DeltaV1, v_inf1, v_H1, v_circ, a_H, e_H, Delta_H1] = HypFuga(rrf, vvf, v_inf1_vec, mu_T, true);
 
 
 %% === GRAFICO ORBITA DI PARCHEGGIO E IPERBOLE DI FUGA ===
@@ -48,7 +49,7 @@ axis([-8e4 8e4 -8e4 8e4 -2e4 8e4]); % [xmin xmax ymin ymax zmin zmax]
 xlabel('x [km]', 'FontSize', 12);
 ylabel('y [km]', 'FontSize', 12);
 zlabel('z [km]', 'FontSize', 12);
-title('Orbita di Parcheggio e Iperbole di Fuga', 'FontSize', 14);
+title('Orbita di Parcheggio e Iperbole di Fuga Coplanare', 'FontSize', 14);
 
 % === Orbita di Parcheggio ===
 theta_vals = linspace(0, 2*pi, 400);
@@ -92,13 +93,14 @@ quiver3(0,0,0, rP(1), rP(2), rP(3), ...
         'Color', [1 0.6 0], 'LineWidth', 1.5, 'MaxHeadSize', 0.5, ...
         'DisplayName', 'intersection radius (r_H)');
 % === Direzione v_infty (facoltativo) ===
+    T_eclip_to_eci = [1 0 0;
+        0 cos(epsilon) sin(epsilon);
+        0 -sin(epsilon) cos(epsilon)];
+    v_inf1_vec = T_eclip_to_eci * v_inf1_vec1;
  quiver3(rP(1), rP(2), rP(3), v_inf1_vec(1), v_inf1_vec(2), v_inf1_vec(3), ...
          300, 'Color', 'm', 'LineWidth', 1.5, 'MaxHeadSize', 1.5, 'DisplayName', 'v_\infty');
 
 %% IPERBOLE DI ARRIVO - SCENARIO 3 (caso coplanare) nel caso di ottimizzazione deltav
-clear all
-close all 
-clc
 
 % Costanti
 G = 6.672591e-11;              % [Nm^2/kg^2] costante gravitazionale
@@ -120,13 +122,13 @@ i_f = 8.51*pi/180;
 OM_f = 205.80*pi/180;
 om_f = 172.04*pi/180;
 rcs=a_f;
+
 % se vogliamo essere precisi, si usa la posizione esatta sapendo anche il
 % th da sc2
 % [rra,vva] = par2car(a_f,e_f,i_f,OM_f,om_f,th,mu_S);
 % rcs = norm(rra);
 
 Ra_SOI = rcs *(m_a/M_S)^(2/5);  % [km] Sphere of Influence asteroide
-
 
 % Range pericentro: da impatto diretto a ingresso marginale nella SOI
 r_pH = R_ast:0.1:Ra_SOI;   % [km] passo 0.1 km
@@ -239,6 +241,7 @@ legend('Asteroide', 'Iperboli di arrivo', 'Manovre', 'Location','best');
 
 
 %% Fuel fraction vs r_pH (Tsiolkovsky)
+r_pH = R_ast:0.1:Ra_SOI;
 Isp = 300;                  % [s] impulso specifico
 g0 = 9.81e-3;               % [km/s^2] accelerazione gravità standard
 fuel_frac = 1 - exp(-DeltaV2 ./ (Isp * g0));   % massa persa in proporzione
@@ -260,3 +263,8 @@ ylabel('Frazione di massa consumata [-]');
 legend('\Deltav_2', 'Frazione carburante');
 
 %% conclusioni 
+
+deltaVTOT=DeltaV1+DeltaV2;
+
+min(deltaVTOT); % 24.3287 km/s
+max(deltaVTOT); % 24.3288 km/s

@@ -31,8 +31,9 @@ v1T_n = [10.6091; 37.5509; 0.4811];                  % [km/s] trasferimento elio
 vv1i=[-13.4511; 26.7331; -0.0019];
 v_inf_eclip = (v1T_n-vv1i);                           % v_infinity geocentrica
 
+Dist=149.61e6;
 % % Sphere of Influence della Terra
-% r_soi_T = norm(rrf) * (M_T / M_S)^(2/5);             % [km]
+r_soi_T = Dist * (M_T / M_S)^(2/5);             % [km]
 
 %% 5.a Cambio rH 
 ehvec=[];
@@ -45,7 +46,7 @@ for j=1:360
     T_eclip_to_eci = [1 0 0;
         0 cos(epsilon) sin(epsilon);
         0 -sin(epsilon) cos(epsilon)];
-    v_inf = T_eclip_to_eci * v_inf_eclip;
+    v_inf = T_eclip_to_eci' * v_inf_eclip;
 
     % 2. Versori
     r_ver_inf = v_inf / norm(v_inf); %Direzione dell'asintoto uscente dell'iperbole
@@ -73,6 +74,12 @@ for j=1:360
     e_H = fsolve(f,e_0);
     ehvec=[ehvec,e_H];
 end
+figure
+plot(1:360,ehvec)
+xline(257,Label='Inizio valori non complessi')
+xline(320,Label='Fine valori non complessi')
+xlabel('Theta orbita parcheggio', 'FontSize', 12);
+ylabel('eccentricità iperbole', 'FontSize', 12);
 %% verifica vincoli 6. Calcolo θ_H e θ_∞
 %Verifica vincoli
 % Se i vincoli non sono rispettati: non esiste un’iperbole in grado di soddisfare 
@@ -106,7 +113,7 @@ end
 
 %% scelta ufficiale e_H 12.1627
 e_H=(eHvalidi(52));
-
+%e_H=7.0753;
 [roP,voP] = par2car(a,e,i,OM,om,deg2rad(308),mu_T);
 r_H=roP;
 theta_H = acos((a_H*(1 - e_H^2)/norm(r_H) - 1) / e_H);
@@ -160,54 +167,14 @@ fprintf('Argomento pericentro ω_H = %.2f deg\n', rad2deg(omega_H));
 
 %% vettore velocità corrispondente a RH
 [r_p, V_H] = par2car(a_H, e_H, i_H, Omega_H, omega_H, theta_H, mu_T);
-deltaV=abs(norm(V_H)-norm(voP))
+DeltaV1=abs(norm(V_H)-norm(voP))
 
-%% grafico
-
-
-% figure; hold on; axis equal; grid on;
-% xlabel('x [km]'); ylabel('y [km]'); zlabel('z [km]');
-% title('Orbita di Parcheggio e Iperbole di Fuga');
-% 
-% % === Parametri orbita di parcheggio ===
-% 
-% % Stato iniziale: orbita di parcheggio (da SC1)
-% rrf = [-3457.33; 6440.71; 2824.78];            % [km]
-% vvf = [-8.1090; -4.3270; -0.0599];             % [km/s]
-% [a,e,i,OM, om, th] = car2par(r_H,voP,mu_T);
-% theta_vals = linspace(0, 2*pi, 400);
-% r_p = a * (1 - e^2) ./ (1 + e * cos(theta_vals));
-% x_p = r_p .* cos(theta_vals);
-% y_p = r_p .* sin(theta_vals);
-% z_p = zeros(size(x_p));
-% R_p = rotation_matrix(OM, i, om);
-% orb_parking = R_p * [x_p; y_p; z_p];
-% plot3(orb_parking(1,:), orb_parking(2,:), orb_parking(3,:), 'b', 'LineWidth', 1.5);
-% 
-% % === Parametri iperbole ===
-% 
-% theta_inf = acos(-1/e_H);
-% theta_vals_H = linspace(-theta_inf + 0.01, theta_inf - 0.01, 500);
-% r_H_vals = a_H * (1 - e_H^2) ./ (1 + e_H * cos(theta_vals_H));
-% x_H = r_H_vals .* cos(theta_vals_H);
-% y_H = r_H_vals .* sin(theta_vals_H);
-% z_H = zeros(size(x_H));
-% R_H = rotation_matrix(Omega_H, i_H, omega_H);
-% orb_hyper = R_H * [x_H; y_H; z_H];
-% plot3(orb_hyper(1,:), orb_hyper(2,:), orb_hyper(3,:), 'r', 'LineWidth', 2);
-% 
-% % === Terra ===
-% [X,Y,Z] = sphere(30);
-% surf(6378*X, 6378*Y, 6378*Z, 'FaceAlpha', 0.2, 'EdgeColor', 'none', 'FaceColor', [0.5 0.7 1]);
-% plot3(r_H(1), r_H(2), r_H(3), 'ko', 'MarkerSize', 8, 'MarkerFaceColor', 'k');
-% legend('Orbita di parcheggio', 'Iperbole di fuga', 'Terra');
-% view(3);
-% 
+%%
 % === GRAFICO ORBITA DI PARCHEGGIO E IPERBOLE DI FUGA ===
 
 figure;
 hold on; axis equal; grid on;
-axis([-8e4 8e4 -8e4 8e4 -2e4 8e4]); % [xmin xmax ymin ymax zmin zmax]
+axis([-5e4 5e4 -5e4 5e4 -2e4 8e4]); % [xmin xmax ymin ymax zmin zmax]
 xlabel('x [km]', 'FontSize', 12);
 ylabel('y [km]', 'FontSize', 12);
 zlabel('z [km]', 'FontSize', 12);
@@ -227,11 +194,11 @@ plot3(orb_parking(1,:), orb_parking(2,:), orb_parking(3,:), ...
 % === Iperbole di Fuga ===
 theta_HH = acos(-1/e_H);
 theta_vals_H = linspace(-theta_HH + 0.01, theta_HH - 0.01, 500);
-% r_H_vals = a_H * (1 - e_H^2) ./ (1 + e_H * cos(theta_vals_H));
-% x_H = r_H_vals .* cos(theta_vals_H);
-% y_H = r_H_vals .* sin(theta_vals_H);
-% z_H = zeros(size(x_H));
-% R_H = rotation_matrix(Omega_H, i_H, omega_H);
+r_H_vals = a_H * (1 - e_H^2) ./ (1 + e_H * cos(theta_vals_H));
+x_H = r_H_vals .* cos(theta_vals_H);
+y_H = r_H_vals .* sin(theta_vals_H);
+z_H = zeros(size(x_H));
+R_H = rotation_matrix(Omega_H, i_H, omega_H);
 % orb_hyper = R_H * [x_H; y_H; z_H];
 % plot3(orb_hyper(1,:), orb_hyper(2,:), orb_hyper(3,:), ...
 %       '-', 'Color', [1 0 0], 'LineWidth', 2.5, 'DisplayName', 'Iperbole di fuga');
@@ -248,7 +215,7 @@ z_pre  = zeros(size(x_pre));
 orb_pre = R_H * [x_pre; y_pre; z_pre];
 
 plot3(orb_pre(1,:), orb_pre(2,:), orb_pre(3,:), ...
-      'r--', 'LineWidth', 1.5, 'DisplayName', 'Iperbole non percorsa');
+      'r--', 'LineWidth', 1.5, 'HandleVisibility', 'off');
 
 % === Parte percorsa (continua) ===
 r_post  = a_H * (1 - e_H^2) ./ (1 + e_H * cos(theta_post));
@@ -276,13 +243,13 @@ plot3(r_H(1), r_H(2), r_H(3), 'ko', 'MarkerSize', 8, ...
          300, 'Color', 'm', 'LineWidth', 1.5, 'MaxHeadSize', 1.5, 'DisplayName', 'v_\infty');
 
 % === Vista 3D e illuminazione ===
-view(35, 25); % Angolo di visualizzazione 3D
+view(30, 25); % Angolo di visualizzazione 3D
 camlight headlight; lighting gouraud;
 
 % === Vettore r_H (dal centro alla posizione di intersezione con l'iperbole)
 quiver3(0,0,0, r_H(1), r_H(2), r_H(3), ...
         'Color', [1 0.6 0], 'LineWidth', 1.5, 'MaxHeadSize', 0.5, ...
-        'DisplayName', 'intersection radius (r_H)');
+        'DisplayName', 'Raggio di intesezione (r_H)');
 
 % Calcolo versore eccentricità se non già noto
 
@@ -291,7 +258,7 @@ r_pH_vec = (RPH+100) * e_vec / norm(e_vec);  % vettore posizione del pericentro 
 % === Vettore pericentro iperbolico
 quiver3(0,0,0, r_pH_vec(1), r_pH_vec(2), r_pH_vec(3), ...
         'Color', [0.2 0.8 0.2], 'LineWidth', 1.5, 'MaxHeadSize', 0.5, ...
-        'DisplayName', 'hyperbola pericenter radius (r_{pH})');
+        'DisplayName', 'Raggio Pericentro Iperbole (r_{pH})');
 
 % === Legenda e formattazione ===
 legend('Location', 'northeastoutside', 'FontSize', 10);
@@ -302,7 +269,37 @@ quiver3(0,0,0, 0,0,1e4, 'k', 'LineWidth', 1.5, 'MaxHeadSize', 0.5, 'HandleVisibi
 text(1.05e4,0,0,'X','FontSize',11);
 text(0,1.05e4,0,'Y','FontSize',11);
 text(0,0,1.05e4,'Z','FontSize',11);
-% set(gca, 'FontSize', 11);
+%%
+clc
+th2_ott = 0;
+for theta_vals = 0:0.1:2*pi
+    r_p = a_H * (1 - e_H^2) ./ (1 + e_H * cos(theta_vals));
+    x_p = r_p .* cos(theta_vals);
+    y_p = r_p .* sin(theta_vals);
+    z_p = 0;
+    R_p = rotation_matrix(Omega_H, i_H, omega_H);
+    orb_hyper = R_p * [x_p; y_p; z_p];
+    norm(orb_hyper)
+    if norm(orb_hyper)>= r_soi_T && th2_ott == 0 
+            th2_ott = theta_vals
+    end
+end
 
-% === Salvataggio immagine (facoltativo) ===
-% saveas(gcf, 'grafico_orbita_iperbole.png');
+%theta_vals = linspace(0, 2*pi, 400);
+% r_p = a * (1 - e^2) ./ (1 + e * cos(theta_vals));
+% x_p = r_p .* cos(theta_vals);
+% y_p = r_p .* sin(theta_vals);
+% z_p = zeros(size(x_p));
+% R_p = rotation_matrix(OM, i, om);
+
+
+
+%% conclusioni
+%deltav2 trovato nel caso coplanare
+DeltaV2=[3.21376088307636	3.21379049603695	3.21381017553883	3.21382446625499	3.21383544989177	3.21384423229354	3.21385146242788	3.21385754954886	3.21386276621076	3.21386730187685	3.21387129288641	3.21387484018972	3.21387802034512	3.21388089260847	3.21388350365658	3.21388589082463	3.21388808438016	3.21389010915518	3.21389198574004	3.21389373137175	3.21389536060493	3.21389688582572	3.21389831765023	3.21389966523702	3.21390093653471	3.21390213847998	3.21390327715747	3.21390435792973	3.21390538554383	3.21390636421927	3.21390729772107	3.21390818942082	3.21390904234800	3.21390985923339	3.21391064254586	3.21391139452382];
+deltaVTOT=DeltaV1+DeltaV2;
+format long
+min(deltaVTOT) % 22.881674933325520 km/s
+max(deltaVTOT) % 22.881825444772979 km/s
+
+
