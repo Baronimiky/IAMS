@@ -1,7 +1,7 @@
 function [DeltaV, omf, thi, thf, DeltaT] = changePericenterArg (a, e, omi, omf, th_i, P, mu)
 % Change of Pericenter Argument maneuver
 %
-% [DeltaV, thetai, thetaf] = changePericenterArg (a, e, omi, omf, mu)
+% [DeltaV, omf, thi, thf, DeltaT] = changePericenterArg (a, e, omi, omf, th_i, P, mu)
 %
 % ---------------------------------------------------------------------
 %
@@ -10,17 +10,19 @@ function [DeltaV, omf, thi, thf, DeltaT] = changePericenterArg (a, e, omi, omf, 
 % e         [1x1]       eccentricity                    [-]
 % omi       [1x1]       initial pericenter anomaly      [rad]
 % omf       [1x1]       final pericenter anomaly        [rad]
+% th_i      [1x1]       initial true anomaly            [rad]
+% P - Maneuver point selection:
+%       1: Perform maneuver at farthest point from current position
+%       2: Perform maneuver at closest point to current position
 % mu        [1x1]       gravitational parameter         [km^3/s^2]
 %
 % ---------------------------------------------------------------------
 % Output arguments:
 % DeltaV    [1x1]       maneuver impulse                [km/s]
 % omf       [1x1]       final pericenter anomaly        [km/s]
-% thi       [1x1]       initial true anomaly            [rad]
+% thi       [1x1]       manouver initial true anomaly   [rad]
 % thf       [1x1]       final true anomaly              [rad]
-% P - Maneuver point selection:
-%       1: Perform maneuver at farthest point from current position
-%       2: Perform maneuver at closest point to current position
+% DeltaT        [1x1]       time from starting point to manouver point    [s]
 
 
 
@@ -46,6 +48,5 @@ end
 p = a * (1 - e^2);
 
 DeltaV = 2 * sqrt(mu / p) * e * sin((dw)/2);
-DeltaT = TOF(a,e,th_i,thi,mu);
-
+DeltaT = TOF(a,e,th_i,thi,mu);  % time from starting point to manouver point
 end

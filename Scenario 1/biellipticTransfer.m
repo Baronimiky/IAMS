@@ -1,52 +1,82 @@
-function [DeltaV1, DeltaV2, DeltaV3, Deltat1, Deltat2, om_f] = biellipticTransfer(ai, ei, af, ef, ra_t, om_i, mu)
+function [DeltaV1, DeltaV2, DeltaV3, Deltat1, Deltat2, om_f] = biellipticTransfer(ai, ei, af, ef, ra_t, om_i, om_f, P, mu)
+
 % Bielliptic transfer for elliptic orbits
 %
-% [DeltaV1, DeltaV2, DeltaV3, Deltat1, Deltat2, om_f] = biellipticTransfer(ai, ei, af, ef, ra_t, mu, om_i)
+% [DeltaV1, DeltaV2, DeltaV3, Deltat1, Deltat2, om_f] = biellipticTransfer(ai, ei, af, ef, ra_t, om_i, om_f, P, mu)
 %
-% -------------------------------------------------------------------------
 % Input arguments:
-% ai        [1x1]   Initial semi-major axis           [km]
-% ei        [1x1]   Initial eccentricity              [-]
-% af        [1x1]   Final semi-major axis             [km]
-% ef        [1x1]   Final eccentricity                [-]
-% ra_t      [1x1]   Apocenter of transfer orbit       [km]
-% mu        [1x1]   Gravitational parameter           [km^3/s^2]
-% om_i      [1x1]   Argument of pericenter (initial)  [rad]
+% ai       [1x1]       Initial semi-major axis [km]
+% ei       [1x1]       Initial eccentricity [-]
+% af       [1x1]       Final semi-major axis [km]
+% ef       [1x1]       Final eccentricity [-]
+% ra_t     [1x1]       Apocenter of transfer orbit [km]
+% om_i     [1x1]       Argument of pericenter (initial) [rad]
+% om_f     [1x1]       Argument of pericenter (final) [rad]
+% P        [1x1]       Starting point: 1=pericenter, 2=apocenter
+% mu       [1x1]       Gravitational parameter [km^3/s^2]
 %
 % -------------------------------------------------------------------------
 % Output arguments:
-% DeltaV1   [1x1]   1st maneuver impulse              [km/s]
-% DeltaV2   [1x1]   2nd maneuver impulse              [km/s]
-% DeltaV3   [1x1]   3rd maneuver impulse              [km/s]
-% Deltat1   [1x1]   Time of first transfer orbit      [s]
-% Deltat2   [1x1]   Time of second transfer orbit     [s]
-% om_f      [1x1]   Argument of pericenter (final)    [rad]
+% DeltaV1  [1x1]  1st maneuver impulse            [km/s]
+% DeltaV2  [1x1]  2nd maneuver impulse            [km/s]
+% DeltaV3  [1x1]  3nd maneuver impulse            [km/s]
+% Deltat1  [1x1]  maneuver time                   [s]
+% Deltat2  [1x1]  maneuver time                   [s]
+% om_f     [1x1]  final pericenter anomaly        [rad]
+%
 
+% Calcola parametri orbitali
+p1 = ai * (1 - ei^2);
+p2 = af * (1 - ef^2);
 
-    rp_t1 = ai * (1 - ei);
-    rp_t2 = af * (1 - ef);
+% Rendi gli angoli positivi
+om_f = PositiveAngles(om_f);
+om_i = PositiveAngles(om_i);
 
-    a_t1 = (rp_t1 + ra_t) / 2;
-    a_t2 = (rp_t2 + ra_t) / 2;
+% Calcola la differenza angolare
+delta_omega = round(abs(om_i - om_f), 12);
+isOpposite = (delta_omega == round(pi, 12));
+isSame = (delta_omega == 0 || delta_omega == round(2*pi, 12));
 
-    DeltaV1 = sqrt(mu) * (sqrt((2 / rp_t1) - (1 / a_t1)) - sqrt((2 / rp_t1) - (1 / ai)));
-    DeltaV2 = sqrt(mu) * (sqrt((2 / ra_t) - (1 / a_t2)) - sqrt((2 / ra_t) - (1 / a_t1)));
-    DeltaV3 = sqrt(mu) * (sqrt((2 / rp_t2) - (1 / af)) - sqrt((2 / rp_t2) - (1 / a_t2)));
+% Determina r1 e r2
+if (P == 2 && isOpposite)
+    r1 = p1 / (1 - ei);  % apocentro iniziale
+    r2 = p2 / (1 + ef);  % pericentro finale
+end
 
-    Deltat1 = pi * sqrt(a_t1^3 / mu);  % half-period of first transfer
-    Deltat2 = pi * sqrt(a_t2^3 / mu);  % half-period of second transfer
+if (P == 1 && isOpposite)
+    r1 = p1 / (1 + ei);  % pericentro iniziale
+    r2 = p2 / (1 - ef);  % apocentro finale
+end
 
-    % Determine maneuver type and compute om_f
-    tol = 1e-6;
-    if abs(rp_t1 - rp_t2) < tol
-        % pp case
-        om_f = om_i;
-    elseif abs((2 * ra_t - rp_t1 - rp_t2)) < tol
-        % aa case
-        om_f = om_i;
-    else
-        % pa or ap case
-        om_f = PositiveAngles(om_i + pi);
-    end
+if (P == 2 && isSame)
+    r1 = p1 / (1 - ei);  % apocentro iniziale
+    r2 = p2 / (1 - ef);  % apocentro finale
+end
+
+if (P == 1 && isSame)
+    r1 = p1 / (1 + ei);  % pericentro iniziale
+    r2 = p2 / (1 + ef);  % pericentro finale
+end
+
+% Calcola semiassi maggiori delle orbite di trasferimento
+at1 = (r1 + ra_t) / 2;
+at2 = (ra_t + r2) / 2;
+
+% Calcola i deltav
+DeltaV1 = sqrt(2*mu*(1/r1 - 1/(2*at1))) - sqrt(2*mu*(1/r1 - 1/(2*ai)));
+DeltaV2 = sqrt(2*mu*(1/ra_t - 1/(2*at2))) - sqrt(2*mu*(1/ra_t - 1/(2*at1)));
+DeltaV3 = sqrt(2*mu*(1/r2 - 1/(2*af))) - sqrt(2*mu*(1/r2 - 1/(2*at2)));
+
+% Calcola i tempi di trasferimento
+Deltat1 = pi * sqrt(at1^3 / mu);
+Deltat2 = pi * sqrt(at2^3 / mu);
+
+% Determina l'argomento del pericentro finale
+if ((isSame && P == 1) || (isOpposite && P == 2))
+    om_f = om_i;  % nessuna rotazione
+else
+    om_f = PositiveAngles(om_i + pi);  % rotazione di 180°
+end
 
 end

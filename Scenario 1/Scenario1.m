@@ -13,7 +13,7 @@ a_i = Or_i(1,1); % semiasse maggiore[km]
 e_i = Or_i(1,2); % eccentricità [-]
 i_i = Or_i(1,3); % inclinazione del piano orbitale[rad] inc_i
 OM_i = Or_i(1,4); % ascensione retta del nodo ascendente[rad] RAAN
-om_i = Or_i(1,5); % anomalia del pericentro[rad] w
+om_i = Or_i(1,5); % anomalia del pericentro [rad] w
 th_i = Or_i(1,6); % posizione del satellite nell'orbita [rad] theta_i
 
 % orbita finale
@@ -30,43 +30,53 @@ vv_f = [vx_f; vy_f;vz_f]; % velocità punto di arrivo orbita
 mu_t = 398600; % costante gravitazionale terra [km^3/s^2]
 mu_s = 132712440018; % costante gravitazionale sole [km^3/s^2]
 
+% Conversione deli parametri orbitali in coordinate cartesiane
 [rr_i,vv_i] = par2car(a_i,e_i,i_i,OM_i,om_i,th_i,mu_t);
 
+% parametri utili per plot orbite
+dth = 0.01; % discriminante theta
+Rt = 6378; % raggio terra
 % Conversione delle coordinate cartesiane in parametri orbitali
 [a_f,e_f,i_f,OM_f,om_f,th_f] = car2par(rr_f,vv_f,mu_t);
 
-dth = 0.01; % discriminante theta
-th0 = 0; % theta iniziale
-thf = 2*pi; %theta finale
-
-Rt = 6378; % raggio terra
-
-%% PLOT TERRA, ORBITA INIZIALE, ORBITA FINALE
-
-Terra3d(Rt); % plot terra 3d
-plotOrbit(a_i,e_i,i_i,OM_i,om_i,th0,thf,dth,mu_t, 'b'); % orbita iniziale in blu
-plotOrbit(a_f,e_f,i_f,OM_f,om_f,th0,thf,dth,mu_t, 'r'); % orbita finale in rosso
-
-
 %% STRATEGIA STANDARD
 
-%% Cambio del piano orbitale
-[DeltaV_CP, om_2, theta_CP] = changeOrbitalPlane(a_i, e_i, i_i, OM_i, om_i, i_f, OM_f, th_i, mu_t);
-DeltaT1 = TOF(a_i, e_i, th_i, theta_CP, mu_t); % tempo manovra
+% Conversione delle coordinate cartesiane in parametri orbitali --> vedi
+% sopra
 
-% plot punto di partenza manovra
-[rr_1] = par2car(a_i,e_i,i_i,OM_i,om_i,theta_CP,mu_t); % punto partenza manovra
+% PLOT TERRA, ORBITA INIZIALE, ORBITA FINALE
+Terra3d(Rt); % plot terra 3d
+plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,dth,mu_t, 'b'); % orbita iniziale in blu
+plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,dth,mu_t, 'r'); % orbita finale in rosso
+
+
+% Cambio del piano orbitale
+[DeltaV_CP, om_2, theta_CP, DeltaT1] = changeOrbitalPlane(a_i, e_i, i_i, OM_i, om_i, i_f, OM_f, th_i, mu_t);
+
+% plot punto di partenza satellite
+[rr_0] = par2car(a_i,e_i,i_i,OM_i,om_i,th_i,mu_t); % punto partenza manovra
+plot3(rr_0(1),rr_0(2),rr_0(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+
+% plot punto di arrivo satellite
+plot3(rr_f(1),rr_f(2),rr_f(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+
+% plot punto di partenza manovra cambio di piano
+[rr_1] = par2car(a_i,e_i,i_i,OM_i,om_i,theta_CP,mu_t); % plot punto partenza manovra cambio piano
 plot3(rr_1(1),rr_1(2),rr_1(3),'k+','LineWidth',2);
 
-%% Cambio dell'anomalia del pericentro
-[DeltaV_CA, om_3, thi_CPA, thf_CPA, DeltaT2] = changePericenterArg(a_i, e_i, om_2, om_f, theta_CP, 1, mu_t);
+plotOrbit(a_i,e_i,i_f,OM_f,om_2,0,2*pi,dth,mu_t, 'g');  % plot orbita di cambio piano
+
+% Cambio dell'anomalia del pericentro
+[DeltaV_CA, om_3, thi_CPA, thf_CPA, DeltaT2] = changePericenterArg(a_i, e_i, om_i, om_f, theta_CP, 1, mu_t);
 
 DeltaT3 = TOF(a_i,e_i,thf_CPA,0,mu_t); % Tempo di volo per ulteriore trasferimento
 
-[rr_2] = par2car(a_i,e_i,i_i,OM_f,om_3,thi_CPA,mu_t); % punto partenza manovra
+[rr_2] = par2car(a_i,e_i,i_f,OM_f,om_2,thi_CPA,mu_t); % plot punto partenza manovra cambio argomento pericentro
 plot3(rr_2(1),rr_2(2),rr_2(3),'k+','LineWidth',2);
 
-%% Trasferimento bitangente
+plotOrbit(a_i,e_i,i_f,OM_f,om_f,0,2*pi,dth,mu_t, 'c'); % plot orbita di cambio argomento pericentro
+
+% Trasferimento bitangente pa
 
 % Identifica tipo manovra 'pa', 'ap', ecc.
 if e_i > e_f
@@ -95,113 +105,318 @@ switch type
         thi_bt = pi;
         thf_bt = pi;
     otherwise
-        error('Tipo di trasferimento bitangente non riconosciuto.');
+        error('Tipo di trasferimento bitangente non riconosciuto');
 end
 
-% Ultimo tempo di volo
-DeltaT5 = TOF(a_f, e_f, thi_bt, thf_bt, mu_t);
+% Ultimo tempo di volo, dal punto di arrivo al punto finale
+DeltaT5 = TOF(a_f, e_f, thf_bt, th_f, mu_t);
 
-
-% non mi funziona plot punto partenza manovra
-[rr_3] = par2car(a_i,e_i,i_i,OM_f,om_f,thi_bt,mu_t); % punto partenza manovra
+[rr_3] = par2car(a_i,e_i,i_f,OM_f,om_f,thi_bt,mu_t); % punto partenza manovra
 plot3(rr_3(1),rr_3(2),rr_3(3),'k+','LineWidth',2);
 
-%% Trasferimento biellittico bitangente
+% CALCOLO DELTA_V, DELTA_T
+Delta_VTot_bitangente = abs(DeltaV_CP) + abs(DeltaV_CA) + abs(DeltaV1_BT) + abs(DeltaV2_BT); % deltaV totale bitangente [m/s]
+Delta_TTot_bitangente = DeltaT1 + DeltaT2 + DeltaT3 + DeltaT4 + DeltaT5; % deltaT totale bitangente [s]
 
-%[DeltaV1, DeltaV2, DeltaV3, Deltat1, Deltat2] = biellipticTransfer(a_i, e_i, a_f, e_f, apocenter_radius, mu_t);
-
-%DeltaT6 = TOF(a_f, e_f, pi, th_f, mu_t);
-
-%% PLOT CAMBIO PIANO E PERICENTRO
-
-plotOrbit(a_i,e_i,i_f,OM_f,om_2,0,2*pi,dth,mu_t, 'g');  % cambio piano
-plotOrbit(a_i,e_i,i_f,OM_f,om_f,0,2*pi,dth,mu_t, 'c'); % cambio pericentro
-
-%% PLOT LEGENDA E CALCOLO DELTA_V, DELTA_T
-
-plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,dth,mu_t) % 
-legend('Orbita iniziale','Orbita finale','Cambio piano','Cambio angolo','Trasferimento bitangente');
-
-Delta_VTot = abs(DeltaV_CP) + abs(DeltaV_CA) + abs(DeltaV1_BT) + abs(DeltaV2_BT); % deltav totale [m/s]
-Delta_TTot = DeltaT1 + DeltaT2 + DeltaT3 + DeltaT4 + DeltaT5; % delta Tempo totale [s]
+% PLOT LEGENDA
+legend('Orbita iniziale','Orbita finale','Punto di partenza satellite','Punto di arrivo satellite','Cambio piano','Cambio argomento del pericentro');
 
 
+%% Trasferimento biellittico bitangente pa
+
+P = 1;
+thi_bielliptic = 0;
+thf_bielliptic = pi;
+apocenter_radius = 1.09 * a_f * (1 + e_f);    % [km]
+
+DeltaT4 = TOF(a_i, e_i, thf_bt, thi_bielliptic, mu_t);
+
+[DeltaV1, DeltaV2, DeltaV3, Deltat1, Deltat2, om_f] = biellipticTransfer(a_i, e_i, a_f, e_f, apocenter_radius, om_f, om_f, P, mu_t);
+
+DeltaT5 = TOF(a_f, e_f, thf_bielliptic, th_f, mu_t);
+
+% CALCOLO DELTA_V, DELTA_T
+Delta_VTot_biellittico = abs(DeltaV_CP) + abs(DeltaV_CA) + abs(DeltaV1) + abs(DeltaV2) + abs(DeltaV3); % deltaV totale biellittico [m/s]
+Delta_TTot_biellittico = DeltaT1 + DeltaT2 + DeltaT3 + DeltaT4 + DeltaT5 + Deltat1 + Deltat2; % deltaT totale biellittico [s]
 
 
 
 
-%%
 
-[St_num,Sv_num,dt_MIN,dv_MIN,dt_vec,dv_vec,param_vec]=StrategyTestSTD_Optimized(a_i,e_i,i_i,OM_i,om_i,th_i,a_f,e_f,i_f,OM_f,om_f,th_f);
+
+%% Strategia ottimale
+[St_num,Sv_num,dt_MIN,dv_MIN,dt_vec,dv_vec,param_vec]=OptimalStrategy(a_i,e_i,i_i,OM_i,om_i,th_i,a_f,e_f,i_f,OM_f,om_f,th_f,mu_t);
+
 dv_MIN
-
-
 
 % tra quelle presenti ora seleziono quella con il deltat minore
 
+[~, idx_min_dv_dt] = min(Sv_num(:,5));
 
+% e la stampo
+
+fprintf("\nc1\tc2\tc3\tc4\tTime (s)\n");
+
+fprintf('%1d\t%1d\t%1d\t%1d\t%.0f\n', Sv_num(idx_min_dv_dt, 1), Sv_num(idx_min_dv_dt, 2), Sv_num(idx_min_dv_dt, 3), Sv_num(idx_min_dv_dt, 4), Sv_num(idx_min_dv_dt, 5));
 
 %% plot
 
-% Trova l'indice della strategia con delta-v minimo
-[~, idx_min] = min(dv_vec);
+% Trova gli indici delle strategie con delta-v minimo e tra questi quello
+% con delta-t minimo e punto di manovra più vicino a quello attuale
+deltav_optimal_indeces = find(dv_vec == dv_MIN & dt_vec == min(Sv_num(:,5)));
 
-% Estrai i parametri rilevanti
-param = param_vec(idx_min, :);
+% COME SCELGO PUNTO DI MANOVRA PIù VICINO?
 
-ra_t      = param(1);  % raggio apocentro per biellittico (solo se applicabile)
-dv1       = param(4);  % primo impulso
-dv2       = param(5);  % secondo impulso
-dv3       = param(6);  % terzo impulso (solo biellittico)
-om_plane  = param(13); % argomento pericentro dopo prima manovra
-om_peri   = param(14); % argomento pericentro dopo seconda manovra
-th_plane  = param(15); % anomalia vera manovra nel piano
-th_shape  = param(17); % anomalia vera manovra di forma (cambio forma orbitale)
+% Dopo aver chiamato StrategyTestSTD_Optimized e ottenuto i risultati...
 
-% Controlla se è un trasferimento biellittico o bitangente
-isBiellittico = (dv3 > 0);  % se c'è il terzo impulso, è biellittico
+% Scegli l'indice della strategia ottimale da plottare (esempio: prima strategia a delta-v minimo)
+optimal_index = deltav_optimal_indices(1); 
 
-% === Plot orbita iniziale ===
-plotOrbit(a_i, e_i, i_i, OM_i, om_i, 0, 2*pi, dth, mu_t, 'g');  % verde
-hold on
+% Estrai i parametri della strategia selezionata
+params = param_vec(optimal_index,:);
+rb_val = params(1);
+th_cp = params(14); 
+thi_ca = params(15);
+thf_ca = params(16);
+th_cs = params(17);
+om_cp = params(12);
+om_ca = params(13);
 
-% === Plot orbita finale ===
-plotOrbit(a_f, e_f, i_f, OM_f, om_f, 0, 2*pi, dth, mu_t, 'r');  % rossa
+% Configura il plot
+figure;
+hold on;
+grid on;
+axis equal;
+xlabel('X [km]');
+ylabel('Y [km]');
+zlabel('Z [km]');
+title(['Strategia Ottimale #' num2str(optimal_index)]);
 
-% === Punto partenza ===
-[rr_start] = par2car(a_i,e_i,i_i,OM_i,om_i,th_plane,mu_t);
-plot3(rr_start(1), rr_start(2), rr_start(3), 'k+','LineWidth',2);
+% Plot orbita iniziale (blu)
+plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,mu_t,'b');
 
-% === Orbite di trasferimento ===
-if isBiellittico
-    % Primo arco di trasferimento: da orbita iniziale a ra_t
-    rp1 = a_i * (1 - e_i);
-    a_t1 = (rp1 + ra_t)/2;
-    e_t1 = (ra_t - rp1)/(ra_t + rp1);
-    plotOrbit(a_t1, e_t1, i_f, OM_f, om_plane, 0, pi, dth, mu_t, 'm');  % viola
+% Plot orbita finale (rossa)
+plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,mu_t,'r');
 
-    % Secondo arco: da ra_t a orbita finale
-    rp2 = a_f * (1 - e_f);
-    a_t2 = (rp2 + ra_t)/2;
-    e_t2 = (ra_t - rp2)/(ra_t + rp2);
-    plotOrbit(a_t2, e_t2, i_f, OM_f, om_peri, pi, 2*pi, dth, mu_t, 'c');  % ciano
+% Plot punti iniziale e finale
+rr_start = par2car(a_i,e_i,i_i,OM_i,om_i,th_i,mu_t);
+plot3(rr_start(1),rr_start(2),rr_start(3),'bo','MarkerSize',10,'MarkerFaceColor','b');
 
-else
-    % Bitangente: una sola orbita di trasferimento
-    % Calcola rpT e raT dal tipo (usa P se serve)
-    rpT = a_i * (1 - e_i);
-    raT = a_f * (1 + e_f);
-    a_T = (rpT + raT)/2;
-    e_T = (raT - rpT)/(raT + rpT);
+rr_end = par2car(a_f,e_f,i_f,OM_f,om_f,th_f,mu_t);
+plot3(rr_end(1),rr_end(2),rr_end(3),'ro','MarkerSize',10,'MarkerFaceColor','r');
 
-    plotOrbit(a_T, e_T, i_f, OM_f, om_plane, 0, 2*pi, dth, mu_t, 'b');  % blu
-end
+% Plot punti di manovra
+rr_cp = par2car(a_i,e_i,i_i,OM_i,om_i,th_cp,mu_t);
+plot3(rr_cp(1),rr_cp(2),rr_cp(3),'ks','MarkerSize',10,'LineWidth',2);
+
+rr_ca = par2car(a_i,e_i,i_f,OM_f,om_cp,thf_ca,mu_t);
+plot3(rr_ca(1),rr_ca(2),rr_ca(3),'kd','MarkerSize',10,'LineWidth',2);
+
+rr_cs = par2car(a_f,e_f,i_f,OM_f,om_ca,th_cs,mu_t);
+plot3(rr_cs(1),rr_cs(2),rr_cs(3),'k^','MarkerSize',10,'LineWidth',2);
+
+% Plot traiettorie di trasferimento
+plotOrbit(a_i,e_i,i_i,OM_i,om_i,th_i,th_cp,0.01,mu_t,'g--'); % Init → CP
+plotOrbit(a_i,e_i,i_f,OM_f,om_cp,th_cp,thf_ca,0.01,mu_t,'m--'); % CP → CA
+plotOrbit(a_i,e_i,i_f,OM_f,om_ca,thf_ca,th_cs,0.01,mu_t,'c--'); % CA → CS
+plotOrbit(a_f,e_f,i_f,OM_f,om_f,th_cs,th_f,0.01,mu_t,'y--'); % CS → Final
+
+% Aggiungi linee tratteggiate per evidenziare le manovre
+plot3([rr_start(1) rr_cp(1)],[rr_start(2) rr_cp(2)],[rr_start(3) rr_cp(3)],'g:');
+plot3([rr_cp(1) rr_ca(1)],[rr_cp(2) rr_ca(2)],[rr_cp(3) rr_ca(3)],'m:');
+plot3([rr_ca(1) rr_cs(1)],[rr_ca(2) rr_cs(2)],[rr_ca(3) rr_cs(3)],'c:');
+plot3([rr_cs(1) rr_end(1)],[rr_cs(2) rr_end(2)],[rr_cs(3) rr_end(3)],'y:');
 
 % Legenda
-legend('Orbita Iniziale','Orbita Finale','Punto manovra','Trasferimento 1','Trasferimento 2');
-axis equal
+legend('Orbita iniziale','Orbita finale',...
+       'Punto iniziale','Punto finale',...
+       'Cambio piano','Cambio pericentro','Cambio forma',...
+       'Init→CP','CP→CA','CA→CS','CS→Final',...
+       'Location','best');
+
+hold off;
+
+% Aggiungi informazioni testuali sulla strategia
+fprintf('\n=== Strategia Ottimale #%d ===\n', optimal_index);
+fprintf('Delta-V totale: %.4f km/s\n', dv_MIN);
+fprintf('Tempo totale: %.4f s\n', dt_vec(optimal_index));
+fprintf('Parametri manovre:\n');
+fprintf(' - Cambio piano: th=%.2f rad, dv=%.4f km/s\n', th_cp, params(2));
+fprintf(' - Cambio pericentro: th=%.2f rad, dv=%.4f km/s\n', thf_ca, params(3));
+fprintf(' - Cambio forma: th=%.2f rad, dv=%.4f+%.4f+%.4f km/s\n', th_cs, params(4:6));
+
+
+
+
+
+%% Trasferimento diretto con Hohmann con punti iniziali e finali fissati
+
+delta_v_ott = 0;
+delta_v_vect = [];
+e_T_n_vec = [];
+i = 0;
+
+Rm = 6.955 *1e+5; % raggio Sole
+
+
+[r1,vv_i] = par2car(a_i,e_i,i_i,OM_i,om_i,th_i,mu_t);
+
+[r2,vv_f] = par2car(a_f,e_f,i_f,OM_f,om_f,th_f,mu_t);
+
+% Versore normale al piano orbitale di trasferimento
+h_T = cross(r1, r2)/norm(cross(r1, r2));
+
+% Calcolo dell'inclinazione dell'orbita di trasferimento
+k = [0, 0, 1]; % Versore asse Z
+i_T = acos(dot(h_T, k));
+
+% Determinazione della linea dei nodi  
+N = cross(k, h_T) / norm(cross(k, h_T));
+
+% Calcolo della ascensione retta del nodo ascendente (RAAN)
+i_hat = [1, 0, 0]; % Versore asse X
+j_hat = [0, 1, 0]; % Versore asse Y
+
+NT_i = dot(N, i_hat);
+NT_j = dot(N, j_hat);
+
+if NT_j >= 0
+    Omega_T = acos(NT_i);
+else
+    Omega_T = 2*pi - acos(NT_i);
+end
+
+% Visualizzazione dei risultati
+%disp(['Inclinazione i_T (rad): ', num2str(i_T)]);
+%disp(['Ascensione retta del nodo ascendente Omega_T (rad): ', num2str(Omega_T)]);
+
+
+
+
+% Creazione del ciclo for per ogni ω_T,n
+for omega_T_n = 0:0.1:2*pi % Definire omega_values con i valori desiderati
+    % Definizione delle matrici di rotazione
+    R_omega_T_n = [cos(omega_T_n), sin(omega_T_n), 0;
+                  -sin(omega_T_n), cos(omega_T_n), 0;
+                   0, 0, 1]; % Rotazione intorno all'asse Z
+    
+    R_i_T = [1, 0, 0;
+             0, cos(i_T), sin(i_T);
+             0, -sin(i_T), cos(i_T)]; % Rotazione intorno all'asse X
+    
+    R_Omega_T = [cos(Omega_T), sin(Omega_T), 0;
+                -sin(Omega_T), cos(Omega_T), 0;
+                 0, 0, 1]; % Rotazione intorno all'asse Z
+
+    % Matrice di trasformazione dal sistema inerziale al perifocale
+    T_Elio_PF_T_n = R_omega_T_n * R_i_T * R_Omega_T;
+
+    % Calcolo della posizione nei sistemi perifocali
+    r1_T_n = T_Elio_PF_T_n * (r1);
+    r2_T_n = T_Elio_PF_T_n * (r2);
+
+    % Calcolo delle anomalie vere
+    theta1_T_n = atan2(r1_T_n(2)/norm(r1), r1_T_n(1)/norm(r1));
+    theta2_T_n = atan2(r2_T_n(2)/norm(r2), r2_T_n(1)/norm(r2));
+    theta1_T_n = PositiveAngles(theta1_T_n);
+    theta2_T_n = PositiveAngles(theta2_T_n);
+
+    % Calcolo degli elementi orbitali
+    e_T_n = (norm(r2) - norm(r1))/(norm(r1) * r1_T_n(1)/norm(r1) - norm(r2) * r2_T_n(1)/norm(r2));
+    if e_T_n <=0 || e_T_n >= 1
+        continue;
+    end
+        e_T_n_vec = [e_T_n_vec; e_T_n];
+        %e_T_n = norm(e_T_n);
+        a_T_n = norm(r1) * (1 + e_T_n * cos(theta1_T_n))/(1 - e_T_n^2);
+    
+        % Determinazione delle velocità nei punti di manovra
+    
+        %p_T_n = a_T_n * (1-e_T_n^2);
+        %v1T_n = sqrt(mu_t./p_T_n) * [-sin(theta1_T_n); e_T_n+cos(theta1_T_n); 0];
+        %v2T_n = sqrt(mu_t./p_T_n) * [-sin(theta2_T_n); e_T_n+cos(theta2_T_n); 0];
+        [~,v1T_n] = par2car(a_T_n,e_T_n,i_T,Omega_T,omega_T_n,theta1_T_n,mu_t);
+        [~,v2T_n] = par2car(a_T_n,e_T_n,i_T,Omega_T,omega_T_n,theta2_T_n,mu_t);
+    
+        % Calcolo del delta-v totale
+        delta_v_n = norm(v1T_n - vv_i) + norm(vv_f - v2T_n);
+
+        %calcolo tempo
+
+        deltat = TOF(a_T_n,e_T_n,theta1_T_n,theta2_T_n,mu_t);
+    
+        if abs(delta_v_ott) > abs(delta_v_n) || delta_v_ott == 0
+            delta_v_ott = delta_v_n;
+            delta_v_ott1= norm(v1T_n - vv_i);
+            delta_v_ott2 = norm(vv_f - v2T_n);
+            th_i_ott = th_i;
+            th_f_ott = th_f;
+            omega_T_ott = omega_T_n;
+            e_T_ott = e_T_n;
+            a_T_ott = a_T_n;
+            theta1_T_ott = theta1_T_n;
+            theta2_T_ott = theta2_T_n;
+            i_T_ott =i_T;
+            Omega_T_ott = Omega_T;
+            delta_t_ott = deltat;
+        end
+        i = i+1;
+        delta_v_vect= [delta_v_vect; delta_v_n];
+end
+
+    % Visualizzazione dei risultati
+            disp(['Per ω_T,n = ', num2str(omega_T_ott)]);
+            disp(['  θ1_T,n (rad): ', num2str(theta1_T_ott)]);
+            disp(['  θ2_T,n (rad): ', num2str(theta2_T_ott)]);
+            disp(['  e_T,n: ', num2str(e_T_ott)]);
+            disp(['  a_T,n: ', num2str(a_T_ott)]);
+            disp(['  Δv_n: ', num2str(delta_v_ott)]);
+            disp('----------------------------------');
+  j = 1:1:i;
+   plot(j,delta_v_vect);
+   legend('\DeltaV');
+   xlabel('Iterazioni')
+   ylabel('\DeltaV [Km/s]')
+   xlim([1,i])
 grid on
-title(sprintf('Strategia a Delta-v minimo (%.3f km/s)', dv_MIN))
+%exportgraphics(gcf, 'delta_v_for.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
+    
+    
+%% Plot orbite
+figure
+hold on;
+plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,dth,mu_t,'r');
+plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,dth,mu_t,'b');
+Terra3d(Rt);
+legend('Orbita Terra','Orbita Asteroide');
+xlabel('Asse X [Km]')
+ylabel('Asse Y [Km]')
+zlabel('Asse Z [Km]')
+box on
+grid on
+view(-20, 15)
+%exportgraphics(gcf, 'delta_v_for.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
+
+%% Plot Orbite con trasferimento Grid Search
+figure('Position', [100, 100, 1000, 600]);
+hold on;
+plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,dth,mu_t);
+plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,dth,mu_t);
+plotOrbit(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,theta2_T_ott+2*pi,dth,mu_t);
+[rr1,~] = par2car(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,mu_t);
+plot3(rr1(1),rr1(2),rr1(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+[rr2] = par2car(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta2_T_ott,mu_t);
+plot3(rr2(1),rr2(2),rr2(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+Terra3d(Rt);
+grid on
+xlabel('Asse X [Km]')
+ylabel('Asse Y [Km]')
+zlabel('Asse Z [Km]')
+view(-10,25)
+legend('dati', 'Location', 'northeast')
+legend('orbita geostazionaria','orbita parcheggio','trasferimento','punto iniziale','punto finale','Terra');
+
+%exportgraphics(gcf, 'hohmann2.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
 
 
 
@@ -211,19 +426,174 @@ title(sprintf('Strategia a Delta-v minimo (%.3f km/s)', dv_MIN))
 
 
 
+%% Trasferimento diretto con Hohmann ottimizzato scegliendo i punti iniziali e finali più favorevoli, e poi attendendo sull'orbita
+
+delta_v_ott = 0;
+delta_v_vect = [];
+e_T_n_vec = [];
+i = 0;
+
+Rm = 6.955 *1e+5; % raggio Sole
+
+for th_i = 0:0.1:2*pi
+    for th_f = 0:0.1:2*pi
+
+        [r1,vv_i] = par2car(a_i,e_i,i_i,OM_i,om_i,th_i,mu_t);
+    
+        [r2,vv_f] = par2car(a_f,e_f,i_f,OM_f,om_f,th_f,mu_t);
+    
+        % Versore normale al piano orbitale di trasferimento
+        h_T = cross(r1, r2)/norm(cross(r1, r2));
+        
+        % Calcolo dell'inclinazione dell'orbita di trasferimento
+        k = [0, 0, 1]; % Versore asse Z
+        i_T = acos(dot(h_T, k));
+        
+        % Determinazione della linea dei nodi  
+        N = cross(k, h_T) / norm(cross(k, h_T));
+        
+        % Calcolo della ascensione retta del nodo ascendente (RAAN)
+        i_hat = [1, 0, 0]; % Versore asse X
+        j_hat = [0, 1, 0]; % Versore asse Y
+        
+        NT_i = dot(N, i_hat);
+        NT_j = dot(N, j_hat);
+        
+        if NT_j >= 0
+            Omega_T = acos(NT_i);
+        else
+            Omega_T = 2*pi - acos(NT_i);
+        end
+        
+        % Visualizzazione dei risultati
+        %disp(['Inclinazione i_T (rad): ', num2str(i_T)]);
+        %disp(['Ascensione retta del nodo ascendente Omega_T (rad): ', num2str(Omega_T)]);
+        
+        
+        
+        
+        % Creazione del ciclo for per ogni ω_T,n
+        for omega_T_n = 0:0.1:2*pi % Definire omega_values con i valori desiderati
+            % Definizione delle matrici di rotazione
+            R_omega_T_n = [cos(omega_T_n), sin(omega_T_n), 0;
+                          -sin(omega_T_n), cos(omega_T_n), 0;
+                           0, 0, 1]; % Rotazione intorno all'asse Z
+            
+            R_i_T = [1, 0, 0;
+                     0, cos(i_T), sin(i_T);
+                     0, -sin(i_T), cos(i_T)]; % Rotazione intorno all'asse X
+            
+            R_Omega_T = [cos(Omega_T), sin(Omega_T), 0;
+                        -sin(Omega_T), cos(Omega_T), 0;
+                         0, 0, 1]; % Rotazione intorno all'asse Z
+        
+            % Matrice di trasformazione dal sistema inerziale al perifocale
+            T_Elio_PF_T_n = R_omega_T_n * R_i_T * R_Omega_T;
+        
+            % Calcolo della posizione nei sistemi perifocali
+            r1_T_n = T_Elio_PF_T_n * (r1);
+            r2_T_n = T_Elio_PF_T_n * (r2);
+        
+            % Calcolo delle anomalie vere
+            theta1_T_n = atan2(r1_T_n(2)/norm(r1), r1_T_n(1)/norm(r1));
+            theta2_T_n = atan2(r2_T_n(2)/norm(r2), r2_T_n(1)/norm(r2));
+            theta1_T_n = PositiveAngles(theta1_T_n);
+            theta2_T_n = PositiveAngles(theta2_T_n);
+
+            % Calcolo degli elementi orbitali
+            e_T_n = (norm(r2) - norm(r1))/(norm(r1) * r1_T_n(1)/norm(r1) - norm(r2) * r2_T_n(1)/norm(r2));
+            if e_T_n <=0 || e_T_n >= 1
+                continue;
+            end
+                e_T_n_vec = [e_T_n_vec; e_T_n];
+                %e_T_n = norm(e_T_n);
+                a_T_n = norm(r1) * (1 + e_T_n * cos(theta1_T_n))/(1 - e_T_n^2);
+            
+                % Determinazione delle velocità nei punti di manovra
+            
+                %p_T_n = a_T_n * (1-e_T_n^2);
+                %v1T_n = sqrt(mu_t./p_T_n) * [-sin(theta1_T_n); e_T_n+cos(theta1_T_n); 0];
+                %v2T_n = sqrt(mu_t./p_T_n) * [-sin(theta2_T_n); e_T_n+cos(theta2_T_n); 0];
+                [~,v1T_n] = par2car(a_T_n,e_T_n,i_T,Omega_T,omega_T_n,theta1_T_n,mu_t);
+                [~,v2T_n] = par2car(a_T_n,e_T_n,i_T,Omega_T,omega_T_n,theta2_T_n,mu_t);
+            
+                % Calcolo del delta-v totale
+                delta_v_n = norm(v1T_n - vv_i) + norm(vv_f - v2T_n);
+
+                %calcolo tempo
+
+                deltat = TOF(a_T_n,e_T_n,theta1_T_n,theta2_T_n,mu_t);
+            
+                if abs(delta_v_ott) > abs(delta_v_n) || delta_v_ott == 0
+                    delta_v_ott = delta_v_n;
+                    delta_v_ott1= norm(v1T_n - vv_i);
+                    delta_v_ott2 = norm(vv_f - v2T_n);
+                    th_i_ott = th_i;
+                    th_f_ott = th_f;
+                    omega_T_ott = omega_T_n;
+                    e_T_ott = e_T_n;
+                    a_T_ott = a_T_n;
+                    theta1_T_ott = theta1_T_n;
+                    theta2_T_ott = theta2_T_n;
+                    i_T_ott =i_T;
+                    Omega_T_ott = Omega_T;
+                    delta_t_ott = deltat;
+                end
+                i = i+1;
+                delta_v_vect= [delta_v_vect; delta_v_n];
+        end
+    end
+end
+
+    % Visualizzazione dei risultati
+            disp(['Per ω_T,n = ', num2str(omega_T_ott)]);
+            disp(['  θ1_T,n (rad): ', num2str(theta1_T_ott)]);
+            disp(['  θ2_T,n (rad): ', num2str(theta2_T_ott)]);
+            disp(['  e_T,n: ', num2str(e_T_ott)]);
+            disp(['  a_T,n: ', num2str(a_T_ott)]);
+            disp(['  Δv_n: ', num2str(delta_v_ott)]);
+            disp('----------------------------------');
+  j = 1:1:i;
+   plot(j,delta_v_vect);
+   legend('\DeltaV');
+   xlabel('Iterazioni')
+   ylabel('\DeltaV [Km/s]')
+   xlim([1,i])
+grid on
+%exportgraphics(gcf, 'delta_v_for.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
+    
+    
+%% Plot orbite
+figure
+plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.1,mu_t);
+plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.1,mu_t);
+Terra3d(Rt*0.1);
+legend('orbita Terra','orbita Asteroide','Sole');
+xlabel('Asse X [Km]')
+ylabel('Asse Y [Km]')
+zlabel('Asse Z [Km]')
+box on
+grid on
+view(-20, 15)
+%exportgraphics(gcf, 'delta_v_for.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
 
 
+%% Plot Orbite con trasferimento Grid Search
+figure('Position', [100, 100, 1000, 600]);
+plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,mu_t);
+plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,mu_t);
+plotOrbit( a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,theta2_T_ott+2*pi,0.001,mu_t);
+[rr1,~] = par2car(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,mu_t);
+plot3(rr1(1),rr1(2),rr1(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+[rr2] = par2car(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta2_T_ott,mu_t);
+plot3(rr2(1),rr2(2),rr2(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+Terra3d(Rt);
+grid on
+xlabel('Asse X [Km]')
+ylabel('Asse Y [Km]')
+zlabel('Asse Z [Km]')
+view(-10,25)
+legend('dati', 'Location', 'northeast')
+legend('orbita geostazionaria','orbita parcheggio','trasferimento','punto iniziale','punto finale','Terra');
 
-
-
-%% Trasferimento biellittico bitangente
-
-[DeltaV1, DeltaV2, DeltaV3, Deltat1, Deltat2] = biellipticTransfer(a_i, e_i, a_f, e_f, apocenter_radius, mu_t);
-
-%% Cambio del piano orbitale
-[DeltaV_CP, om_2, theta_CP] = changeOrbitalPlane(a_i, e_i, i_i, OM_i, om_i, i_f, OM_f, th_i, mu_t);
-
-%% Cambio dell'anomalia del pericentro
-[DeltaV_CA, thi_CPA, thf_CPA] = changePericenterArg(a_i, e_i, om_2, om_f, mu_t);
-
-deltav_tot = DeltaV1 + DeltaV2 + DeltaV3 + DeltaV_CP + DeltaV_CA
+exportgraphics(gcf, 'hohmann2.pdf', 'ContentType', 'vector', 'BackgroundColor','none')

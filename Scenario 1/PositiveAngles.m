@@ -1,7 +1,6 @@
 function a=PositiveAngles(alpha)
 
-%fa in modo che l'angolo in radianti sia sempre espresso come positivo e
-%compreso tra 0 e 2pi
+% Normalizza l'angolo in radianti in [0,2*pi]
 
 if (alpha>=0)
     a=mod(alpha,2*pi);
