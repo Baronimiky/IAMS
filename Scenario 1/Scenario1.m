@@ -44,8 +44,9 @@ Rt = 6378; % raggio terra
 % Conversione delle coordinate cartesiane in parametri orbitali --> vedi
 % sopra
 
-% PLOT TERRA, ORBITA INIZIALE, ORBITA FINALE
-Terra3d(Rt); % plot terra 3d
+% PLOT ORBITA INIZIALE, ORBITA FINALE
+figure('Position', [100, 100, 1000, 600])
+hold on;
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,dth,mu_t, 'b'); % orbita iniziale in blu
 plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,dth,mu_t, 'r'); % orbita finale in rosso
 
@@ -55,24 +56,24 @@ plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,dth,mu_t, 'r'); % orbita finale in rosso
 
 % plot punto di partenza satellite
 [rr_0] = par2car(a_i,e_i,i_i,OM_i,om_i,th_i,mu_t); % punto partenza manovra
-plot3(rr_0(1),rr_0(2),rr_0(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+plot3(rr_0(1),rr_0(2),rr_0(3), '.', 'MarkerSize', 40, 'LineWidth', 4);
 
 % plot punto di arrivo satellite
-plot3(rr_f(1),rr_f(2),rr_f(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
+plot3(rr_f(1),rr_f(2),rr_f(3), '.', 'MarkerSize', 40, 'LineWidth', 4);
 
 % plot punto di partenza manovra cambio di piano
 [rr_1] = par2car(a_i,e_i,i_i,OM_i,om_i,theta_CP,mu_t); % plot punto partenza manovra cambio piano
-plot3(rr_1(1),rr_1(2),rr_1(3),'k+','LineWidth',2);
+plot3(rr_1(1),rr_1(2),rr_1(3),'k+','LineWidth',2,'MarkerSize', 10);
 
 plotOrbit(a_i,e_i,i_f,OM_f,om_2,0,2*pi,dth,mu_t, 'g');  % plot orbita di cambio piano
 
 % Cambio dell'anomalia del pericentro
-[DeltaV_CA, om_3, thi_CPA, thf_CPA, DeltaT2] = changePericenterArg(a_i, e_i, om_i, om_f, theta_CP, 1, mu_t);
+[DeltaV_CA, om_3, thi_CPA, thf_CPA, DeltaT2] = changePericenterArg(a_i, e_i, om_2, om_f, theta_CP, 1, mu_t);
 
 DeltaT3 = TOF(a_i,e_i,thf_CPA,0,mu_t); % Tempo di volo per ulteriore trasferimento
 
 [rr_2] = par2car(a_i,e_i,i_f,OM_f,om_2,thi_CPA,mu_t); % plot punto partenza manovra cambio argomento pericentro
-plot3(rr_2(1),rr_2(2),rr_2(3),'k+','LineWidth',2);
+plot3(rr_2(1),rr_2(2),rr_2(3),'k+','LineWidth',2,'MarkerSize', 10);
 
 plotOrbit(a_i,e_i,i_f,OM_f,om_f,0,2*pi,dth,mu_t, 'c'); % plot orbita di cambio argomento pericentro
 
@@ -111,16 +112,21 @@ end
 % Ultimo tempo di volo, dal punto di arrivo al punto finale
 DeltaT5 = TOF(a_f, e_f, thf_bt, th_f, mu_t);
 
-[rr_3] = par2car(a_i,e_i,i_f,OM_f,om_f,thi_bt,mu_t); % punto partenza manovra
-plot3(rr_3(1),rr_3(2),rr_3(3),'k+','LineWidth',2);
+[rr_3] = par2car(a_i,e_i,i_f,OM_f,om_f,thi_bt,mu_t); % punto partenza manovra trasferimento bitangente
+plot3(rr_3(1),rr_3(2),rr_3(3),'k+','LineWidth',2,'MarkerSize', 10);
 
 % CALCOLO DELTA_V, DELTA_T
 Delta_VTot_bitangente = abs(DeltaV_CP) + abs(DeltaV_CA) + abs(DeltaV1_BT) + abs(DeltaV2_BT); % deltaV totale bitangente [m/s]
 Delta_TTot_bitangente = DeltaT1 + DeltaT2 + DeltaT3 + DeltaT4 + DeltaT5; % deltaT totale bitangente [s]
 
-% PLOT LEGENDA
-legend('Orbita iniziale','Orbita finale','Punto di partenza satellite','Punto di arrivo satellite','Cambio piano','Cambio argomento del pericentro');
+Terra3d(Rt); % plot terra 3d
 
+% PLOT LEGENDA
+xlabel('Asse X [Km]')
+ylabel('Asse Y [Km]')
+zlabel('Asse Z [Km]')
+legend('dati', 'Location', 'northwest')
+legend('Orbita iniziale','Orbita finale','Punto di partenza satellite','Punto di arrivo satellite','Punto di partenza cambio di piano','Cambio piano','Punto partenza cambio argomento pericentro','Cambio argomento del pericentro','Punto partenza trasferimento bitangente');
 
 %% Trasferimento biellittico bitangente pa
 
@@ -147,17 +153,15 @@ Delta_TTot_biellittico = DeltaT1 + DeltaT2 + DeltaT3 + DeltaT4 + DeltaT5 + Delta
 %% Strategia ottimale
 [St_num,Sv_num,dt_MIN,dv_MIN,dt_vec,dv_vec,param_vec]=OptimalStrategy(a_i,e_i,i_i,OM_i,om_i,th_i,a_f,e_f,i_f,OM_f,om_f,th_f,mu_t);
 
-dv_MIN
-
 % tra quelle presenti ora seleziono quella con il deltat minore
 
 [~, idx_min_dv_dt] = min(Sv_num(:,5));
 
 % e la stampo
 
-fprintf("\nc1\tc2\tc3\tc4\tTime (s)\n");
+fprintf("\ndeltaV_min\tc1\tc2\tc3\tc4\tTime (s)\n");
 
-fprintf('%1d\t%1d\t%1d\t%1d\t%.0f\n', Sv_num(idx_min_dv_dt, 1), Sv_num(idx_min_dv_dt, 2), Sv_num(idx_min_dv_dt, 3), Sv_num(idx_min_dv_dt, 4), Sv_num(idx_min_dv_dt, 5));
+fprintf('%.5f%1d\t%1d\t%1d\t%1d\t%.0f\n',dv_MIN, Sv_num(idx_min_dv_dt, 1), Sv_num(idx_min_dv_dt, 2), Sv_num(idx_min_dv_dt, 3), Sv_num(idx_min_dv_dt, 4), Sv_num(idx_min_dv_dt, 5));
 
 %% plot
 
