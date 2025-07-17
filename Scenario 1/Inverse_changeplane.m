@@ -1,7 +1,7 @@
-function [omi]=InverseCP(Ii,OMi,omf,If,OMf)
+function [omi]=Inverse_changeplane(Ii,OMi,omf,If,OMf)
 % Inverse Change of Plane maneuver
 %
-% [omi] = InverseCP(Ii, OMi, omf, If, OMf)
+% [omi] = Inverse_changeplane(Ii, OMi, omf, If, OMf)
 %
 % -------------------------------------------------------------------------
 % Scopo:

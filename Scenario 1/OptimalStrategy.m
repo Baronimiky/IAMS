@@ -42,6 +42,8 @@ function [optimal_time_strategies,optimal_deltav_strategies,minimum_time,minimum
 % - fourth number (c4):
 %         maneuver point for change of periapsis (1 or 2)
 
+% Mapping dei tipi di trasferimento bitangente
+transfer_types = {'pa', 'pp', 'ap', 'aa'};  % 1=pa, 2=pp, 3=ap, 4=aa
 
 ra_f = af * (1 + ef);  % Apocentro finale
 
@@ -86,7 +88,8 @@ for c1 = 1:6
                             rb_val = best_rb;
                             dv1 = best_dv1; dv2 = best_dv2; dv3 = best_dv3; th_cs = best_th_cs;
                         else
-                            [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,om_ca,af,ef,omf,P,mu);
+                            transfer_type = transfer_types{c2};
+                            [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,om_ca,af,ef,omf,P,mu,transfer_type);
                             dv_cs = abs(dv1) + abs(dv2) + abs(dv3);
                             dt_cs_t = dt_cs_temp;
                         end
@@ -104,7 +107,8 @@ for c1 = 1:6
                             rb_val = best_rb;
                             dv1 = best_dv1; dv2 = best_dv2; dv3 = best_dv3; th_cs = best_th_cs;
                         else
-                            [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,om_cp,af,ef,om_cp+phi,P,mu);
+                            transfer_type = transfer_types{c2};
+                            [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,om_cp,af,ef,om_cp+phi,P,mu,transfer_type);
                             dv_cs = abs(dv1) + abs(dv2) + abs(dv3);
                             dt_cs_t = dt_cs_temp;
                         end
@@ -113,7 +117,7 @@ for c1 = 1:6
                         dt_fin = TOF(af,ef,thf_ca,thf,mu);
                         
                     case 3  % A-P-S
-                        om = InverseCP(Ii,OMi,omf-phi,If,OMf);
+                        om = Inverse_changeplane(Ii,OMi,omf-phi,If,OMf);
                         [dv_ca, om_ca, thi_ca, thf_ca, dt_ca] = changePericenterArg(ai,ei,omi,om,thi,c4,mu);
                         [dv_cp, om_cp, th_cp, dt_cp] = changeOrbitalPlane(ai,ei,Ii,OMi,om_ca,If,OMf,thf_ca,mu);
                         dt_trans = TOF(ai,ei,th_cp,th_cs_1,mu);
@@ -125,7 +129,8 @@ for c1 = 1:6
                             rb_val = best_rb;
                             dv1 = best_dv1; dv2 = best_dv2; dv3 = best_dv3; th_cs = best_th_cs;
                         else
-                            [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,om_cp,af,ef,omf,P,mu);
+                            transfer_type = transfer_types{c2};
+                            [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,om_cp,af,ef,omf,P,mu,transfer_type);
                             dv_cs = abs(dv1) + abs(dv2) + abs(dv3);
                             dt_cs_t = dt_cs_temp;
                         end
@@ -142,7 +147,8 @@ for c1 = 1:6
                             rb_val = best_rb;
                             dv1 = best_dv1; dv2 = best_dv2; dv3 = best_dv3; th_cs = best_th_cs;
                         else
-                            [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,omi,af,ef,omi+phi,P,mu);
+                            transfer_type = transfer_types{c2};
+                            [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,omi,af,ef,omi+phi,P,mu,transfer_type);
                             dv_cs = abs(dv1) + abs(dv2) + abs(dv3);
                             dt_cs_t = dt_cs_temp;
                         end
@@ -152,7 +158,7 @@ for c1 = 1:6
                         dt_fin = TOF(af,ef,thf_ca,thf,mu);
                         
                     case 5  % A-S-P
-                        om = InverseCP(Ii,OMi,omf,If,OMf);
+                        om = Inverse_changeplane(Ii,OMi,omf,If,OMf);
                         [dv_ca, om_ca, thi_ca, thf_ca, dt_ca] = changePericenterArg(ai,ei,omi,om+phi,thi,c4,mu);
                         dt_trans = TOF(ai,ei,thf_ca,th_cs_1,mu);
                         
@@ -163,7 +169,8 @@ for c1 = 1:6
                             rb_val = best_rb;
                             dv1 = best_dv1; dv2 = best_dv2; dv3 = best_dv3; th_cs = best_th_cs;
                         else
-                            [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,om_ca,af,ef,om,P,mu);
+                            transfer_type = transfer_types{c2};
+                            [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,om_ca,af,ef,om,P,mu,transfer_type);
                             dv_cs = abs(dv1) + abs(dv2) + abs(dv3);
                             dt_cs_t = dt_cs_temp;
                         end
@@ -181,12 +188,13 @@ for c1 = 1:6
                             rb_val = best_rb;
                             dv1 = best_dv1; dv2 = best_dv2; dv3 = best_dv3; th_cs = best_th_cs;
                         else
-                            [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,omi,af,ef,omi+phi,P,mu);
+                            transfer_type = transfer_types{c2};
+                            [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,omi,af,ef,omi+phi,P,mu,transfer_type);
                             dv_cs = abs(dv1) + abs(dv2) + abs(dv3);
                             dt_cs_t = dt_cs_temp;
                         end
                         dt_cs = dt_cs_t + dt_trans;
-                        om = InverseCP(Ii,OMi,omf,If,OMf);
+                        om = Inverse_changeplane(Ii,OMi,omf,If,OMf);
                         [dv_ca, om_ca, thi_ca, thf_ca, dt_ca] = changePericenterArg(af,ef,omi+phi,om,th_cs,c4,mu);
                         [dv_cp, om_cp, th_cp, dt_cp] = changeOrbitalPlane(af,ef,Ii,OMi,om,If,OMf,thf_ca,mu);
                         dt_fin = TOF(af,ef,th_cp,thf,mu);
@@ -263,7 +271,7 @@ function [min_dv, min_dt, best_rb, best_dv1, best_dv2, best_dv3, best_th_cs] = i
     
     for i = 1:length(rb_vect)
         rb = rb_vect(i);
-        [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,om_input,af,ef,om_output,P,mu,rb);
+        [dv1,dv2,dv3,th_cs,dt_cs_temp] = changeOrbitShape(ai,ei,om_input,af,ef,om_output,P,mu,{''},rb);
         total_dv = abs(dv1) + abs(dv2) + abs(dv3);
         
         if total_dv < min_dv

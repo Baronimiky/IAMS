@@ -59,19 +59,19 @@ function [DeltaV1, DeltaV2, Deltat, om_f] = bitangentTransfer(ai, ei, af, ef, om
     vaT = sqrt(mu * (2 / raT - 1 / aT));
     
     % DeltaV
-    if type == "pa"
+    if type == 'pa'
         DeltaV1 = vpT - vp_i;
         DeltaV2 = va_f - vaT;
         om_f = om_i;
-    elseif type == "ap"
+    elseif type == 'ap'
         DeltaV1 = vaT - va_i;
         DeltaV2 = vp_f - vpT;
         om_f = om_i;
-    elseif type == "pp"
+    elseif type == 'pp'
         DeltaV1 = vpT - vp_i;
         DeltaV2 = vp_f - vaT;
         om_f = PositiveAngles(om_i + pi);
-    elseif type == "aa"
+    elseif type == 'aa'
         DeltaV1 = vpT - va_i;
         DeltaV2 = va_f - vaT;
 

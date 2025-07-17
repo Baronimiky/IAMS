@@ -79,16 +79,7 @@ plotOrbit(a_i,e_i,i_f,OM_f,om_f,0,2*pi,dth,mu_t, 'c'); % plot orbita di cambio a
 
 % Trasferimento bitangente pa
 
-% Identifica tipo manovra 'pa', 'ap', ecc.
-if e_i > e_f
-    type = 'pa';
-elseif e_i < e_f
-    type = 'ap';
-elseif e_i == 0 && e_f == 0
-    type = 'aa';
-else
-    type = 'pp';
-end
+type = 'ap';
 
 [DeltaV1_BT, DeltaV2_BT, DeltaT4, om_f] = bitangentTransfer(a_i, e_i, a_f, e_f, om_f, type, mu_t);
 
@@ -116,8 +107,8 @@ DeltaT5 = TOF(a_f, e_f, thf_bt, th_f, mu_t);
 plot3(rr_3(1),rr_3(2),rr_3(3),'k+','LineWidth',2,'MarkerSize', 10);
 
 % CALCOLO DELTA_V, DELTA_T
-Delta_VTot_bitangente = abs(DeltaV_CP) + abs(DeltaV_CA) + abs(DeltaV1_BT) + abs(DeltaV2_BT); % deltaV totale bitangente [m/s]
-Delta_TTot_bitangente = DeltaT1 + DeltaT2 + DeltaT3 + DeltaT4 + DeltaT5; % deltaT totale bitangente [s]
+Delta_VTot_bitangente = abs(DeltaV_CP) + abs(DeltaV_CA) + abs(DeltaV1_BT) + abs(DeltaV2_BT) % deltaV totale bitangente [m/s]
+Delta_TTot_bitangente = DeltaT1 + DeltaT2 + DeltaT3 + DeltaT4 + DeltaT5 % deltaT totale bitangente [s]
 
 Terra3d(Rt); % plot terra 3d
 
