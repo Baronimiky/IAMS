@@ -136,11 +136,6 @@ DeltaT5 = TOF(a_f, e_f, thf_bielliptic, th_f, mu_t);
 Delta_VTot_biellittico = abs(DeltaV_CP) + abs(DeltaV_CA) + abs(DeltaV1) + abs(DeltaV2) + abs(DeltaV3); % deltaV totale biellittico [m/s]
 Delta_TTot_biellittico = DeltaT1 + DeltaT2 + DeltaT3 + DeltaT4 + DeltaT5 + Deltat1 + Deltat2; % deltaT totale biellittico [s]
 
-
-
-
-
-
 %% Strategia ottimale e plot
 [St_num,Sv_num,dt_MIN,dv_MIN,dt_vec,dv_vec,parameters_all]=OptimalStrategy(a_i,e_i,i_i,OM_i,om_i,th_i,a_f,e_f,i_f,OM_f,om_f,th_f,mu_t);
 
