@@ -385,28 +385,12 @@ end
 grid on
 %exportgraphics(gcf, 'delta_v_for.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
     
-    
-%% Plot orbite
-figure
-hold on;
-plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,dth,mu_t,'r');
-plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,dth,mu_t,'b');
-Terra3d(Rt);
-legend('Orbita Terra','Orbita Asteroide');
-xlabel('Asse X [Km]')
-ylabel('Asse Y [Km]')
-zlabel('Asse Z [Km]')
-box on
-grid on
-view(-20, 15)
-%exportgraphics(gcf, 'delta_v_for.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
-
 %% Plot Orbite con trasferimento Grid Search
 figure('Position', [100, 100, 1000, 600]);
 hold on;
-plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,dth,mu_t);
-plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,dth,mu_t);
-plotOrbit(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,theta2_T_ott+2*pi,dth,mu_t);
+plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,dth,mu_t,'r');
+plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,dth,mu_t,'b');
+plotOrbit(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,theta2_T_ott,dth,mu_t,'y');
 [rr1,~] = par2car(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,mu_t);
 plot3(rr1(1),rr1(2),rr1(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
 [rr2] = par2car(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta2_T_ott,mu_t);
@@ -421,14 +405,6 @@ legend('dati', 'Location', 'northeast')
 legend('orbita geostazionaria','orbita parcheggio','trasferimento','punto iniziale','punto finale','Terra');
 
 %exportgraphics(gcf, 'hohmann2.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
-
-
-
-
-
-
-
-
 
 %% Trasferimento diretto con Hohmann ottimizzato scegliendo i punti iniziali e finali più favorevoli, e poi attendendo sull'orbita
 
@@ -564,29 +540,14 @@ end
    ylabel('\DeltaV [Km/s]')
    xlim([1,i])
 grid on
-%exportgraphics(gcf, 'delta_v_for.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
-    
-    
-%% Plot orbite
-figure
-plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.1,mu_t);
-plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.1,mu_t);
-Terra3d(Rt*0.1);
-legend('orbita Terra','orbita Asteroide','Sole');
-xlabel('Asse X [Km]')
-ylabel('Asse Y [Km]')
-zlabel('Asse Z [Km]')
-box on
-grid on
-view(-20, 15)
-%exportgraphics(gcf, 'delta_v_for.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
 
 
 %% Plot Orbite con trasferimento Grid Search
 figure('Position', [100, 100, 1000, 600]);
-plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,mu_t);
-plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,mu_t);
-plotOrbit( a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,theta2_T_ott+2*pi,0.001,mu_t);
+hold on
+plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,dth,mu_t,'r');
+plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,dth,mu_t,'b');
+plotOrbit( a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,theta2_T_ott+2*pi,dth,mu_t,'y');
 [rr1,~] = par2car(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta1_T_ott,mu_t);
 plot3(rr1(1),rr1(2),rr1(3), '.', 'MarkerSize', 20, 'LineWidth', 2);
 [rr2] = par2car(a_T_ott,e_T_ott,i_T_ott,Omega_T_ott,omega_T_ott,theta2_T_ott,mu_t);
@@ -600,4 +561,4 @@ view(-10,25)
 legend('dati', 'Location', 'northeast')
 legend('orbita geostazionaria','orbita parcheggio','trasferimento','punto iniziale','punto finale','Terra');
 
-exportgraphics(gcf, 'hohmann2.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
+%exportgraphics(gcf, 'hohmann2.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
