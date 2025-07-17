@@ -25,9 +25,6 @@ function [omi]=Inverse_changeplane(Ii,OMi,omf,If,OMf)
 % Note:
 % - La funzione sfrutta la geometria tra i due piani orbitali per determinare
 %   la posizione relativa dei pericentri.
-% - Si assume che il cambiamento di piano avvenga in un singolo punto, e si
-%   considera solo la geometria dei due piani orbitali.
-% - Utilizza la formula dell’angolo tra piani orbitali (alpha).
 %
 
 % Porta tutti gli angoli in [0, 2*pi]

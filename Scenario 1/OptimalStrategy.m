@@ -3,24 +3,21 @@ function [optimal_time_strategies,optimal_deltav_strategies,minimum_time,minimum
 % function to calculate all the possible 192 (96 + bielliptical cases)
 % standard strategies changing the order of the maneuvers and of the
 % maneuver points.
-% NB: the bielliptical cases are also considered in this function, taking
+% The bielliptical cases are also considered in this function, taking
 % the value of rb as the one associated to the minimum dv in a range from 0 to 5*rf
 % OUTPUTS:
-% St_num: array containing the strategies (in the form of numerical codes)
+% optimal_time_strategies: array containing the strategies (in the form of numerical codes)
 %         relative to the minimum total time
-% Sv_num: array containing the strategies (in the form of numerical codes)
+% optimal_deltav_strategies: array containing the strategies (in the form of numerical codes)
 %         relative to the minimum total delta of velocity
-% dt_MIN: minimum total time
-% dv_MIN: minimum delta of velocity
-% dt_vec: array with all the total times
-% dv_vec: array with all the total delta v
-% param_vec: array containing all the useful parameters for all the strategies
+% minimum_time: minimum total time
+% minimum_deltav: minimum delta of velocity
+% all_times: array with all the total times
+% all_deltav: array with all the total delta v
+% strategy_parameters: array containing all the useful parameters for all the strategies
 %            [rb_val,dv_cp,dv_ca,dv1,dv2,dv3,dt_cp,dt_ca,dt_trans,dt_cs_t,dt_fin,om_cp,om_ca,th_cp,thf_old,thf_new,th_cs]
 
-% dt_trans: time to reach the maneuver point for the change of shape starting from the last point of the previous maneuver
-
-%LEGEND:
-% how to interpret the numerical codes assosciated to the strategies in St_num and Sv_num:
+% Codes:
 % - first number (c1):
 %         1: plane-axes-shape
 %         2: plane-shape-axes
