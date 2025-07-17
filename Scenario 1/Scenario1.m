@@ -142,7 +142,7 @@ Delta_TTot_biellittico = DeltaT1 + DeltaT2 + DeltaT3 + DeltaT4 + DeltaT5 + Delta
 
 
 %% Strategia ottimale e plot
-[St_num,Sv_num,dt_MIN,dv_MIN,dt_vec,dv_vec,param_vec]=OptimalStrategy(a_i,e_i,i_i,OM_i,om_i,th_i,a_f,e_f,i_f,OM_f,om_f,th_f,mu_t);
+[St_num,Sv_num,dt_MIN,dv_MIN,dt_vec,dv_vec,parameters_all]=OptimalStrategy(a_i,e_i,i_i,OM_i,om_i,th_i,a_f,e_f,i_f,OM_f,om_f,th_f,mu_t);
 
 % tra quelle presenti per il deltaV minore ora seleziono quella con il deltat minore
 
@@ -157,7 +157,7 @@ deltav_optimal_indices = find(dv_vec == dv_MIN & dt_vec == min(Sv_num(:,5)));
 optimal_index = deltav_optimal_indices(1);
 
 % Estraggo i parametri della strategia selezionata
-params = param_vec(optimal_index,:);
+params = parameters_all(optimal_index,:);
 rb_val = params(1);
 th_cp = params(14);
 thi_ca = params(15);
@@ -174,7 +174,7 @@ axis equal;
 xlabel('X [km]');
 ylabel('Y [km]');
 zlabel('Z [km]');
-title(['Strategia Ottimale #' num2str(optimal_index)]);
+title(['Strategia Ottimale per Velocità Minima #' num2str(optimal_index)]);
 
 % Plot orbita iniziale (blu)
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,mu_t,'b');
@@ -231,7 +231,7 @@ Terra3d(Rt); % plot terra 3d
 hold off;
 
 % Stampo informazioni sulla strategia
-fprintf('\n=== Strategia Ottimale #%d ===\n', optimal_index);
+fprintf('\n=== Strategia Ottimale per Velocità Minima #%d ===\n', optimal_index);
 fprintf('Delta-V totale: %.4f km/s\n', dv_MIN);
 fprintf('Tempo totale: %.4f s\n', dt_vec(optimal_index));
 fprintf('Parametri manovre:\n');
@@ -256,7 +256,7 @@ deltat_optimal_indices = find(dt_vec == dt_MIN & dv_vec == min(St_num(:,5)));
 optimal_index = deltat_optimal_indices(1);
 
 % Estraggo i parametri della strategia selezionata
-params = param_vec(optimal_index,:);
+params = parameters_all(optimal_index,:);
 rb_val = params(1);
 th_cp = params(14);
 thi_ca = params(15);
@@ -644,3 +644,16 @@ zlabel('Asse Z [Km]')
 view(-10,25)
 legend('dati', 'Location', 'northeast')
 legend('orbita geostazionaria','orbita parcheggio','trasferimento','punto iniziale','punto finale','Terra');
+
+%% Ottimizzazione combinata
+
+J_ott = Inf;
+
+for i=1:192
+    J = 0.5*dv_vec(i)/4.7609 + 0.5*dt_vec(i)/38491;
+    if J<J_ott
+        Delta_V_ott_vectem = dv_vec(i);
+        Delta_T_ott_vectem = dt_vec(i);
+        J_ott = J;
+    end
+end
