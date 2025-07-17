@@ -352,8 +352,6 @@ delta_v_vect = [];
 e_T_n_vec = [];
 i = 0;
 
-Rm = 6.955 *1e+5; % raggio Sole
-
 
 [r1,vv_i] = par2car(a_i,e_i,i_i,OM_i,om_i,th_i,mu_t);
 
@@ -503,8 +501,6 @@ delta_v_vect = [];
 e_T_n_vec = [];
 i = 0;
 
-Rm = 6.955 *1e+5; % raggio Sole
-
 for th_i = 0:0.1:2*pi
     for th_f = 0:0.1:2*pi
 
@@ -538,8 +534,6 @@ for th_i = 0:0.1:2*pi
         % Visualizzazione dei risultati
         %disp(['Inclinazione i_T (rad): ', num2str(i_T)]);
         %disp(['Ascensione retta del nodo ascendente Omega_T (rad): ', num2str(Omega_T)]);
-        
-        
         
         
         % Creazione del ciclo for per ogni ω_T,n
