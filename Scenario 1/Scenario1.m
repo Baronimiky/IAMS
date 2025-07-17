@@ -470,7 +470,7 @@ end
 grid on
 %exportgraphics(gcf, 'delta_v_for.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
     
-%% Plot Orbite con trasferimento Grid Search
+%% Plot Orbite
 figure('Position', [100, 100, 1000, 600]);
 hold on;
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,dth,mu_t,'r');
@@ -621,7 +621,7 @@ end
 grid on
 
 
-%% Plot Orbite con trasferimento Grid Search
+%% Plot Orbite
 figure('Position', [100, 100, 1000, 600]);
 hold on
 plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,dth,mu_t,'r');
