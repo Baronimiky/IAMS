@@ -235,7 +235,7 @@ fprintf('\n=== Strategia Ottimale #%d ===\n', optimal_index);
 fprintf('Delta-V totale: %.4f km/s\n', dv_MIN);
 fprintf('Tempo totale: %.4f s\n', dt_vec(optimal_index));
 fprintf('Parametri manovre:\n');
-fprintf(' - Cambio piano: th=%.2f rad, dv=%.4f km/s\n', th_cp, params(2));
+fprintf(' - Cambio piano: th=%.2f rad, dv=%.4f km/s\n', PositiveAngles(th_cp), params(2));
 fprintf(' - Cambio pericentro: th=%.2f rad, dv=%.4f km/s\n', thf_ca, params(3));
 fprintf(' - Cambio forma: th=%.2f rad, dv=%.4f, %.4f, %.4f km/s\n', th_cs, params(4:6));
 if rb_val > 0
@@ -644,49 +644,3 @@ zlabel('Asse Z [Km]')
 view(-10,25)
 legend('dati', 'Location', 'northeast')
 legend('orbita geostazionaria','orbita parcheggio','trasferimento','punto iniziale','punto finale','Terra');
-
-
-
-%% CODICIONE TEST
-% Conversione delle coordinate cartesiane in parametri orbitali --> vedi
-% sopra
-
-% PLOT ORBITA INIZIALE, ORBITA FINALE
-
-% Trasferimento bitangente aa
-
-type = 'aa';
-
-[DeltaV1_BT, DeltaV2_BT, DeltaT2, om_1] = bitangentTransfer(a_i, e_i, a_f, e_f, om_i, type, mu_t);
-
-switch type
-    case 'pa'
-        thi_bt = 0;
-        thf_bt = pi;
-    case 'ap'
-        thi_bt = pi;
-        thf_bt = 0;
-    case 'pp'
-        thi_bt = 0;
-        thf_bt = 0;
-    case 'aa'
-        thi_bt = pi;
-        thf_bt = pi;
-    otherwise
-        error('Tipo di trasferimento bitangente non riconosciuto');
-end
-
-DeltaT1 = TOF(a_i,e_i,th_i,thi_bt,mu_t); % Tempo di volo per ulteriore trasferimento --> arrivo al punto del trasferimento successivo
-
-% Cambio del piano orbitale
-[DeltaV_CP, om_2, theta_CP, DeltaT3] = changeOrbitalPlane(a_f, e_f, i_i, OM_i, om_1, i_f, OM_f, thf_bt, mu_t);
-
-% Cambio dell'anomalia del pericentro
-[DeltaV_CA, om_3, thi_CPA, thf_CPA, DeltaT4] = changePericenterArg(a_f, e_f, om_2, om_f, PositiveAngles(theta_CP), 1, mu_t);
-
-% Ultimo tempo di volo, dal punto di arrivo al punto finale0
-DeltaT5 = TOF(a_f, e_f, thf_CPA, th_f, mu_t);
-
-% CALCOLO DELTA_V, DELTA_T
-Delta_VTot_bitangente = abs(DeltaV_CP) + abs(DeltaV_CA) + abs(DeltaV1_BT) + abs(DeltaV2_BT); % deltaV totale bitangente [m/s]
-Delta_TTot_bitangente = DeltaT1 + DeltaT2  + DeltaT4 + DeltaT5; % deltaT totale bitangente [s]
