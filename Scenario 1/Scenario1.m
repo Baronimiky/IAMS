@@ -70,7 +70,7 @@ plotOrbit(a_i,e_i,i_f,OM_f,om_2,0,2*pi,dth,mu_t, 'g');  % plot orbita di cambio 
 % Cambio dell'anomalia del pericentro
 [DeltaV_CA, om_3, thi_CPA, thf_CPA, DeltaT2] = changePericenterArg(a_i, e_i, om_2, om_f, theta_CP, 1, mu_t);
 
-DeltaT3 = TOF(a_i,e_i,thf_CPA,0,mu_t); % Tempo di volo per ulteriore trasferimento
+DeltaT3 = TOF(a_i,e_i,thf_CPA,0,mu_t); % Tempo di volo per ulteriore trasferimento --> arrivo al punto del trasferimento successivo
 
 [rr_2] = par2car(a_i,e_i,i_f,OM_f,om_2,thi_CPA,mu_t); % plot punto partenza manovra cambio argomento pericentro
 plot3(rr_2(1),rr_2(2),rr_2(3),'k+','LineWidth',2,'MarkerSize', 10);
@@ -79,7 +79,7 @@ plotOrbit(a_i,e_i,i_f,OM_f,om_f,0,2*pi,dth,mu_t, 'c'); % plot orbita di cambio a
 
 % Trasferimento bitangente pa
 
-type = 'ap';
+type = 'pa';
 
 [DeltaV1_BT, DeltaV2_BT, DeltaT4, om_f] = bitangentTransfer(a_i, e_i, a_f, e_f, om_f, type, mu_t);
 
@@ -107,8 +107,8 @@ DeltaT5 = TOF(a_f, e_f, thf_bt, th_f, mu_t);
 plot3(rr_3(1),rr_3(2),rr_3(3),'k+','LineWidth',2,'MarkerSize', 10);
 
 % CALCOLO DELTA_V, DELTA_T
-Delta_VTot_bitangente = abs(DeltaV_CP) + abs(DeltaV_CA) + abs(DeltaV1_BT) + abs(DeltaV2_BT) % deltaV totale bitangente [m/s]
-Delta_TTot_bitangente = DeltaT1 + DeltaT2 + DeltaT3 + DeltaT4 + DeltaT5 % deltaT totale bitangente [s]
+Delta_VTot_bitangente = abs(DeltaV_CP) + abs(DeltaV_CA) + abs(DeltaV1_BT) + abs(DeltaV2_BT); % deltaV totale bitangente [m/s]
+Delta_TTot_bitangente = DeltaT1 + DeltaT2 + DeltaT3 + DeltaT4 + DeltaT5; % deltaT totale bitangente [s]
 
 Terra3d(Rt); % plot terra 3d
 
@@ -141,36 +141,25 @@ Delta_TTot_biellittico = DeltaT1 + DeltaT2 + DeltaT3 + DeltaT4 + DeltaT5 + Delta
 
 
 
-%% Strategia ottimale
+%% Strategia ottimale e plot
 [St_num,Sv_num,dt_MIN,dv_MIN,dt_vec,dv_vec,param_vec]=OptimalStrategy(a_i,e_i,i_i,OM_i,om_i,th_i,a_f,e_f,i_f,OM_f,om_f,th_f,mu_t);
 
-% tra quelle presenti ora seleziono quella con il deltat minore
+% tra quelle presenti per il deltaV minore ora seleziono quella con il deltat minore
 
 [~, idx_min_dv_dt] = min(Sv_num(:,5));
 
-% e la stampo
-
-fprintf("\ndeltaV_min\tc1\tc2\tc3\tc4\tTime (s)\n");
-
-fprintf('%.5f%1d\t%1d\t%1d\t%1d\t%.0f\n',dv_MIN, Sv_num(idx_min_dv_dt, 1), Sv_num(idx_min_dv_dt, 2), Sv_num(idx_min_dv_dt, 3), Sv_num(idx_min_dv_dt, 4), Sv_num(idx_min_dv_dt, 5));
-
-%% plot
+% plot
 
 % Trova gli indici delle strategie con delta-v minimo e tra questi quello
 % con delta-t minimo e punto di manovra più vicino a quello attuale
-deltav_optimal_indeces = find(dv_vec == dv_MIN & dt_vec == min(Sv_num(:,5)));
 
-% COME SCELGO PUNTO DI MANOVRA PIù VICINO?
+deltav_optimal_indices = find(dv_vec == dv_MIN & dt_vec == min(Sv_num(:,5)));
+optimal_index = deltav_optimal_indices(1);
 
-% Dopo aver chiamato StrategyTestSTD_Optimized e ottenuto i risultati...
-
-% Scegli l'indice della strategia ottimale da plottare (esempio: prima strategia a delta-v minimo)
-optimal_index = deltav_optimal_indices(1); 
-
-% Estrai i parametri della strategia selezionata
+% Estraggo i parametri della strategia selezionata
 params = param_vec(optimal_index,:);
 rb_val = params(1);
-th_cp = params(14); 
+th_cp = params(14);
 thi_ca = params(15);
 thf_ca = params(16);
 th_cs = params(17);
@@ -193,6 +182,120 @@ plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,mu_t,'b');
 % Plot orbita finale (rossa)
 plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,mu_t,'r');
 
+% Plot orbite di trasferimento intermedie (linee tratteggiate)
+% Orbita dopo cambio piano
+plotOrbit(a_i,e_i,i_f,OM_f,om_cp,0,2*pi,0.01,mu_t,'g:');
+
+% Orbita dopo cambio pericentro
+plotOrbit(a_i,e_i,i_f,OM_f,om_ca,0,2*pi,0.01,mu_t,'m:');
+
+% Se è una strategia biellittica, plotto anche l'orbita intermedia
+if rb_val > 0
+    % Calcola parametri orbita biellittica intermedia
+    a_intermediate = (a_i + rb_val) / 2;
+    e_intermediate = abs(rb_val - a_i) / (rb_val + a_i);
+    plotOrbit(a_intermediate,e_intermediate,i_f,OM_f,om_ca,0,2*pi,0.01,mu_t,'k:');
+end
+
+% Plot punti iniziale e finale
+rr_start = par2car(a_i,e_i,i_i,OM_i,om_i,th_i,mu_t);
+plot3(rr_start(1),rr_start(2),rr_start(3),'bo','MarkerSize',10,'MarkerFaceColor','b');
+rr_end = par2car(a_f,e_f,i_f,OM_f,om_f,th_f,mu_t);
+plot3(rr_end(1),rr_end(2),rr_end(3),'ro','MarkerSize',10,'MarkerFaceColor','r');
+
+% Plot punti di manovra
+rr_cp = par2car(a_i,e_i,i_i,OM_i,om_i,th_cp,mu_t);
+plot3(rr_cp(1),rr_cp(2),rr_cp(3),'ks','MarkerSize',10,'LineWidth',2);
+rr_ca = par2car(a_i,e_i,i_f,OM_f,om_cp,thf_ca,mu_t);
+plot3(rr_ca(1),rr_ca(2),rr_ca(3),'kd','MarkerSize',10,'LineWidth',2);
+rr_cs = par2car(a_i,e_i,i_f,OM_f,om_ca,th_cs,mu_t);
+plot3(rr_cs(1),rr_cs(2),rr_cs(3),'k^','MarkerSize',10,'LineWidth',2);
+
+% Legenda
+if rb_val > 0
+    legend('Orbita iniziale','Orbita finale',...
+        'Orbita post-cambio piano','Orbita post-cambio pericentro','Orbita biellittica intermedia',...
+        'Punto iniziale','Punto finale',...
+        'Cambio piano','Cambio pericentro','Cambio forma',...
+        'Location','best');
+else
+    legend('Orbita iniziale','Orbita finale',...
+        'Orbita post-cambio piano','Orbita post-cambio pericentro',...
+        'Punto iniziale','Punto finale',...
+        'Cambio piano','Cambio pericentro','Cambio forma',...
+        'Location','best');
+end
+
+Terra3d(Rt); % plot terra 3d
+
+hold off;
+
+% Stampo informazioni sulla strategia
+fprintf('\n=== Strategia Ottimale #%d ===\n', optimal_index);
+fprintf('Delta-V totale: %.4f km/s\n', dv_MIN);
+fprintf('Tempo totale: %.4f s\n', dt_vec(optimal_index));
+fprintf('Parametri manovre:\n');
+fprintf(' - Cambio piano: th=%.2f rad, dv=%.4f km/s\n', th_cp, params(2));
+fprintf(' - Cambio pericentro: th=%.2f rad, dv=%.4f km/s\n', thf_ca, params(3));
+fprintf(' - Cambio forma: th=%.2f rad, dv=%.4f, %.4f, %.4f km/s\n', th_cs, params(4:6));
+if rb_val > 0
+    fprintf(' - Raggio biellittico: %.2f km\n', rb_val);
+end
+fprintf('Parametri: c1: %1d\tc2: %1d\t c3: %1d\t c4: %1d\n', Sv_num(idx_min_dv_dt, 1), Sv_num(idx_min_dv_dt, 2), Sv_num(idx_min_dv_dt, 3), Sv_num(idx_min_dv_dt, 4));
+
+
+% delta t minimo
+
+% tra quelle presenti per il deltaT minore ora seleziono quella con il deltaV minore
+[~, idx_min_dt] = min(St_num(:,5));
+
+% plot
+% Trova gli indici delle strategie con delta-t minimo e, tra questi, quello
+% con delta-v minimo e punto di manovra più vicino a quello attuale
+deltat_optimal_indices = find(dt_vec == dt_MIN & dv_vec == min(St_num(:,5)));
+optimal_index = deltat_optimal_indices(1);
+
+% Estraggo i parametri della strategia selezionata
+params = param_vec(optimal_index,:);
+rb_val = params(1);
+th_cp = params(14);
+thi_ca = params(15);
+thf_ca = params(16);
+th_cs = params(17);
+om_cp = params(12);
+om_ca = params(13);
+
+% inizio plot
+figure;
+hold on;
+grid on;
+axis equal;
+xlabel('X [km]');
+ylabel('Y [km]');
+zlabel('Z [km]');
+title(['Strategia Ottimale per Tempo Minimo #' num2str(optimal_index)]);
+
+% Plot orbita iniziale (blu)
+plotOrbit(a_i,e_i,i_i,OM_i,om_i,0,2*pi,0.01,mu_t,'b');
+
+% Plot orbita finale (rossa)
+plotOrbit(a_f,e_f,i_f,OM_f,om_f,0,2*pi,0.01,mu_t,'r');
+
+% Plot orbite di trasferimento intermedie (linee tratteggiate)
+% Orbita dopo cambio piano
+plotOrbit(a_i,e_i,i_f,OM_f,om_cp,0,2*pi,0.01,mu_t,'g:');
+
+% Orbita dopo cambio pericentro
+plotOrbit(a_i,e_i,i_f,OM_f,om_ca,0,2*pi,0.01,mu_t,'m:');
+
+% Se è una strategia biellittica, plotto anche l'orbita intermedia
+if rb_val > 0
+    % Calcola parametri orbita biellittica intermedia
+    a_intermediate = (a_i + rb_val) / 2;
+    e_intermediate = abs(rb_val - a_i) / (rb_val + a_i);
+    plotOrbit(a_intermediate,e_intermediate,i_f,OM_f,om_ca,0,2*pi,0.01,mu_t,'k:');
+end
+
 % Plot punti iniziale e finale
 rr_start = par2car(a_i,e_i,i_i,OM_i,om_i,th_i,mu_t);
 plot3(rr_start(1),rr_start(2),rr_start(3),'bo','MarkerSize',10,'MarkerFaceColor','b');
@@ -207,44 +310,42 @@ plot3(rr_cp(1),rr_cp(2),rr_cp(3),'ks','MarkerSize',10,'LineWidth',2);
 rr_ca = par2car(a_i,e_i,i_f,OM_f,om_cp,thf_ca,mu_t);
 plot3(rr_ca(1),rr_ca(2),rr_ca(3),'kd','MarkerSize',10,'LineWidth',2);
 
-rr_cs = par2car(a_f,e_f,i_f,OM_f,om_ca,th_cs,mu_t);
+rr_cs = par2car(a_i,e_i,i_f,OM_f,om_ca,th_cs,mu_t);
 plot3(rr_cs(1),rr_cs(2),rr_cs(3),'k^','MarkerSize',10,'LineWidth',2);
 
-% Plot traiettorie di trasferimento
-plotOrbit(a_i,e_i,i_i,OM_i,om_i,th_i,th_cp,0.01,mu_t,'g--'); % Init → CP
-plotOrbit(a_i,e_i,i_f,OM_f,om_cp,th_cp,thf_ca,0.01,mu_t,'m--'); % CP → CA
-plotOrbit(a_i,e_i,i_f,OM_f,om_ca,thf_ca,th_cs,0.01,mu_t,'c--'); % CA → CS
-plotOrbit(a_f,e_f,i_f,OM_f,om_f,th_cs,th_f,0.01,mu_t,'y--'); % CS → Final
-
-% Aggiungi linee tratteggiate per evidenziare le manovre
-plot3([rr_start(1) rr_cp(1)],[rr_start(2) rr_cp(2)],[rr_start(3) rr_cp(3)],'g:');
-plot3([rr_cp(1) rr_ca(1)],[rr_cp(2) rr_ca(2)],[rr_cp(3) rr_ca(3)],'m:');
-plot3([rr_ca(1) rr_cs(1)],[rr_ca(2) rr_cs(2)],[rr_ca(3) rr_cs(3)],'c:');
-plot3([rr_cs(1) rr_end(1)],[rr_cs(2) rr_end(2)],[rr_cs(3) rr_end(3)],'y:');
-
 % Legenda
-legend('Orbita iniziale','Orbita finale',...
-       'Punto iniziale','Punto finale',...
-       'Cambio piano','Cambio pericentro','Cambio forma',...
-       'Init→CP','CP→CA','CA→CS','CS→Final',...
-       'Location','best');
+if rb_val > 0
+    legend('Orbita iniziale','Orbita finale',...
+           'Orbita post-cambio piano','Orbita post-cambio pericentro','Orbita biellittica intermedia',...
+           'Punto iniziale','Punto finale',...
+           'Cambio piano','Cambio pericentro','Cambio forma',...
+           'Location','best');
+else
+    legend('Orbita iniziale','Orbita finale',...
+           'Orbita post-cambio piano','Orbita post-cambio pericentro',...
+           'Punto iniziale','Punto finale',...
+           'Cambio piano','Cambio pericentro','Cambio forma',...
+           'Location','best');
+end
+
+Terra3d(Rt); % plot terra 3d
 
 hold off;
 
-% Aggiungi informazioni testuali sulla strategia
-fprintf('\n=== Strategia Ottimale #%d ===\n', optimal_index);
-fprintf('Delta-V totale: %.4f km/s\n', dv_MIN);
-fprintf('Tempo totale: %.4f s\n', dt_vec(optimal_index));
+% Stampo informazioni sulla strategia
+fprintf('\n=== Strategia Ottimale per Tempo Minimo #%d ===\n', optimal_index);
+fprintf('Tempo totale: %.4f s\n', dt_MIN);
+fprintf('Delta-V totale: %.4f km/s\n', dv_vec(optimal_index));
 fprintf('Parametri manovre:\n');
 fprintf(' - Cambio piano: th=%.2f rad, dv=%.4f km/s\n', th_cp, params(2));
 fprintf(' - Cambio pericentro: th=%.2f rad, dv=%.4f km/s\n', thf_ca, params(3));
-fprintf(' - Cambio forma: th=%.2f rad, dv=%.4f+%.4f+%.4f km/s\n', th_cs, params(4:6));
+fprintf(' - Cambio forma: th=%.2f rad, dv=%.4f, %.4f, %.4f km/s\n', th_cs, params(4:6));
+if rb_val > 0
+    fprintf(' - Raggio biellittico: %.2f km\n', rb_val);
+end
+fprintf('Parametri: c1: %1d\tc2: %1d\t c3: %1d\t c4: %1d\n', St_num(idx_min_dt, 1), St_num(idx_min_dt, 2), St_num(idx_min_dt, 3), St_num(idx_min_dt, 4));
 
-
-
-
-
-%% Trasferimento diretto con Hohmann con punti iniziali e finali fissati
+%% Trasferimento diretto con punti iniziali e finali fissati
 
 delta_v_ott = 0;
 delta_v_vect = [];
@@ -395,9 +496,7 @@ view(-10,25)
 legend('dati', 'Location', 'northeast')
 legend('orbita geostazionaria','orbita parcheggio','trasferimento','punto iniziale','punto finale','Terra');
 
-%exportgraphics(gcf, 'hohmann2.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
-
-%% Trasferimento diretto con Hohmann ottimizzato scegliendo i punti iniziali e finali più favorevoli, e poi attendendo sull'orbita
+%% Trasferimento diretto scegliendo i punti iniziali e finali più favorevoli, e poi attendendo sull'orbita
 
 delta_v_ott = 0;
 delta_v_vect = [];
@@ -552,4 +651,48 @@ view(-10,25)
 legend('dati', 'Location', 'northeast')
 legend('orbita geostazionaria','orbita parcheggio','trasferimento','punto iniziale','punto finale','Terra');
 
-%exportgraphics(gcf, 'hohmann2.pdf', 'ContentType', 'vector', 'BackgroundColor','none')
+
+
+%% CODICIONE TEST
+% Conversione delle coordinate cartesiane in parametri orbitali --> vedi
+% sopra
+
+% PLOT ORBITA INIZIALE, ORBITA FINALE
+
+% Trasferimento bitangente aa
+
+type = 'aa';
+
+[DeltaV1_BT, DeltaV2_BT, DeltaT2, om_1] = bitangentTransfer(a_i, e_i, a_f, e_f, om_i, type, mu_t);
+
+switch type
+    case 'pa'
+        thi_bt = 0;
+        thf_bt = pi;
+    case 'ap'
+        thi_bt = pi;
+        thf_bt = 0;
+    case 'pp'
+        thi_bt = 0;
+        thf_bt = 0;
+    case 'aa'
+        thi_bt = pi;
+        thf_bt = pi;
+    otherwise
+        error('Tipo di trasferimento bitangente non riconosciuto');
+end
+
+DeltaT1 = TOF(a_i,e_i,th_i,thi_bt,mu_t); % Tempo di volo per ulteriore trasferimento --> arrivo al punto del trasferimento successivo
+
+% Cambio del piano orbitale
+[DeltaV_CP, om_2, theta_CP, DeltaT3] = changeOrbitalPlane(a_f, e_f, i_i, OM_i, om_1, i_f, OM_f, thf_bt, mu_t);
+
+% Cambio dell'anomalia del pericentro
+[DeltaV_CA, om_3, thi_CPA, thf_CPA, DeltaT4] = changePericenterArg(a_f, e_f, om_2, om_f, PositiveAngles(theta_CP), 1, mu_t);
+
+% Ultimo tempo di volo, dal punto di arrivo al punto finale0
+DeltaT5 = TOF(a_f, e_f, thf_CPA, th_f, mu_t);
+
+% CALCOLO DELTA_V, DELTA_T
+Delta_VTot_bitangente = abs(DeltaV_CP) + abs(DeltaV_CA) + abs(DeltaV1_BT) + abs(DeltaV2_BT); % deltaV totale bitangente [m/s]
+Delta_TTot_bitangente = DeltaT1 + DeltaT2  + DeltaT4 + DeltaT5; % deltaT totale bitangente [s]
