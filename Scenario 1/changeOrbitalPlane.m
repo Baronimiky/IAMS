@@ -90,4 +90,4 @@ end
 
 dv=2*sqrt(mu/(ai*(1-ei^2)))*(1+ei*cos(thf))*sin(alpha/2);
 
-dt=TOF(ai,ei,thi,thf,mu);
+dt=TOF(ai,ei,PositiveAngles(thi),PositiveAngles(thf),mu);

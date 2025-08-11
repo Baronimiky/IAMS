@@ -239,7 +239,7 @@ end
 fprintf('Parametri: c1: %1d\tc2: %1d\t c3: %1d\t c4: %1d\n', Sv_num(idx_min_dv_dt, 1), Sv_num(idx_min_dv_dt, 2), Sv_num(idx_min_dv_dt, 3), Sv_num(idx_min_dv_dt, 4));
 
 
-% delta t minimo
+%% delta t minimo
 
 % tra quelle presenti per il deltaT minore ora seleziono quella con il deltaV minore
 [~, idx_min_dt] = min(St_num(:,5));
